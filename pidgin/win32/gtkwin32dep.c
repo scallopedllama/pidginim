@@ -331,7 +331,7 @@ winpidgin_window_flash(GtkWindow *window, gboolean flash) {
 		info.uCount = 3;
 		if (SystemParametersInfo(SPI_GETFOREGROUNDFLASHCOUNT, 0, &flashCount, 0))
 			info.uCount = flashCount;
-		info.dwFlags = FLASHW_ALL | FLASHW_TIMER;
+		info.dwFlags = FLASHW_ALL | FLASHW_TIMERNOFG;
 	} else
 		info.dwFlags = FLASHW_STOP;
 	FlashWindowEx(&info);
