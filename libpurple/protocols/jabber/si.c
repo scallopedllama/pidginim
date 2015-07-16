@@ -58,7 +58,7 @@ typedef struct _JabberSIXfer {
 		STREAM_METHOD_UNKNOWN     = 0,
 		STREAM_METHOD_BYTESTREAMS = 2 << 1,
 		STREAM_METHOD_IBB         = 2 << 2,
-		STREAM_METHOD_UNSUPPORTED = 2 << 31
+		STREAM_METHOD_UNSUPPORTED = 2 << 30
 	} stream_method;
 
 	GList *streamhosts;
@@ -446,7 +446,7 @@ jabber_si_xfer_bytestreams_send_read_again_cb(gpointer data, gint source,
 		close(source);
 		purple_xfer_cancel_remote(xfer);
 		return;
-	} else if(jsx->rxlen - 5 <  jsx->rxqueue[4] + 2) {
+	} else if(jsx->rxlen - 5 < (size_t)jsx->rxqueue[4] + 2) {
 		/* Upper-bound of 257 (jsx->rxlen = 5, jsx->rxqueue[4] = 0xFF) */
 		unsigned short to_read = jsx->rxqueue[4] + 2 - (jsx->rxlen - 5);
 		purple_debug_info("jabber", "reading %u bytes for DST.ADDR + port num (trying to read %hu now)\n",
@@ -467,7 +467,7 @@ jabber_si_xfer_bytestreams_send_read_again_cb(gpointer data, gint source,
 	}
 
 	/* Have we not read all of DST.ADDR and the following 2-byte port number? */
-	if(jsx->rxlen - 5 < jsx->rxqueue[4] + 2)
+	if(jsx->rxlen - 5 < (size_t)jsx->rxqueue[4] + 2)
 		return;
 
 	purple_input_remove(xfer->watcher);
@@ -594,7 +594,7 @@ jabber_si_xfer_bytestreams_send_read_cb(gpointer data, gint source,
 		memcpy(jsx->rxqueue + jsx->rxlen, buffer, len);
 		jsx->rxlen += len;
 		return;
-	} else if(jsx->rxlen - 2 < jsx->rxqueue[1]) {
+	} else if(jsx->rxlen - 2 < (size_t)jsx->rxqueue[1]) {
 		/* Has a maximum value of 255 (jsx->rxlen = 2, jsx->rxqueue[1] = 0xFF) */
 		unsigned short to_read = jsx->rxqueue[1] - (jsx->rxlen - 2);
 		purple_debug_info("jabber", "reading %u bytes for auth methods (trying to read %hu now)\n",
@@ -615,7 +615,7 @@ jabber_si_xfer_bytestreams_send_read_cb(gpointer data, gint source,
 	}
 
 	/* Have we not read all the auth. method bytes? */
-	if(jsx->rxlen -2 < jsx->rxqueue[1])
+	if(jsx->rxlen -2 < (size_t)jsx->rxqueue[1])
 		return;
 
 	purple_input_remove(xfer->watcher);
@@ -681,7 +681,7 @@ jabber_si_xfer_bytestreams_send_connected_cb(gpointer data, gint source,
 {
 	PurpleXfer *xfer = data;
 	JabberSIXfer *jsx = xfer->data;
-	int acceptfd, flags;
+	int acceptfd;
 
 	purple_debug_info("jabber", "in jabber_si_xfer_bytestreams_send_connected_cb\n");
 
@@ -698,11 +698,7 @@ jabber_si_xfer_bytestreams_send_connected_cb(gpointer data, gint source,
 	close(source);
 	jsx->local_streamhost_fd = -1;
 
-	flags = fcntl(acceptfd, F_GETFL);
-	fcntl(acceptfd, F_SETFL, flags | O_NONBLOCK);
-#ifndef _WIN32
-	fcntl(acceptfd, F_SETFD, FD_CLOEXEC);
-#endif
+	_purple_network_set_common_socket_flags(acceptfd);
 
 	xfer->watcher = purple_input_add(acceptfd, PURPLE_INPUT_READ,
 					 jabber_si_xfer_bytestreams_send_read_cb, xfer);
@@ -866,7 +862,7 @@ jabber_si_xfer_bytestreams_listen_cb(int sock, gpointer data)
 		jid = g_strdup_printf("%s@%s/%s", jsx->js->user->node,
 			jsx->js->user->domain, jsx->js->user->resource);
 		xfer->local_port = purple_network_get_port_from_fd(sock);
-		g_snprintf(port, sizeof(port), "%hu", xfer->local_port);
+		g_snprintf(port, sizeof(port), "%hu", (guint16)xfer->local_port);
 
 		public_ip = purple_network_get_my_ip(jsx->js->fd);
 
@@ -917,7 +913,7 @@ jabber_si_xfer_bytestreams_listen_cb(int sock, gpointer data)
 		streamhost = xmlnode_new_child(query, "streamhost");
 		xmlnode_set_attrib(streamhost, "jid", sh->jid);
 		xmlnode_set_attrib(streamhost, "host", sh->host);
-		g_snprintf(port, sizeof(port), "%hu", sh->port);
+		g_snprintf(port, sizeof(port), "%hu", (guint16)sh->port);
 		xmlnode_set_attrib(streamhost, "port", port);
 
 		sh2 = g_new0(JabberBytestreamsStreamhost, 1);
@@ -1714,8 +1710,13 @@ void jabber_si_parse(JabberStream *js, const char *from, JabberIqType type,
 
 	if((filesize_c = xmlnode_get_attrib(file, "size")))
 		filesize_64 = g_ascii_strtoull(filesize_c, NULL, 10);
+
+#ifndef __COVERITY__
 	/* TODO 3.0.0: When the core uses a guint64, this is redundant.
 	 * See #8477.
+	 *
+	 * It may not be necessary on 64-bit machine.
+	 * It raises result_independent_of_operands coverity false positive.
 	 */
 	if (filesize_64 > G_MAXSIZE) {
 		/* Should this pop up a warning? */
@@ -1723,6 +1724,7 @@ void jabber_si_parse(JabberStream *js, const char *from, JabberIqType type,
 		                     " -- see #8477 for more details.");
 		return;
 	}
+#endif
 	filesize = filesize_64;
 
 	if(!(feature = xmlnode_get_child(si, "feature")))

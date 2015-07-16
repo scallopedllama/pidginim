@@ -121,7 +121,6 @@ silcpurple_mime_message(SilcClient client, SilcClientConnection conn,
 		SilcMime p;
 		const char *mtype;
 		SilcDList parts = silc_mime_get_multiparts(mime, &mtype);
-		SilcBool ret;
 
 		if (!strcmp(mtype, "mixed")) {
 			/* Contains multiple messages */
@@ -456,7 +455,6 @@ silc_notify(SilcClient client, SilcClientConnection conn,
 	SilcNotifyType notify;
 	PurpleBuddy *b;
 	SilcDList list;
-	int i;
 
 	va_start(va, type);
 	memset(buf, 0, sizeof(buf));
@@ -852,6 +850,7 @@ silc_notify(SilcClient client, SilcClientConnection conn,
 			if (public_key) {
 				GSList *buddies;
 				const char *f;
+				gsize i;
 
 				pk = silc_pkcs_public_key_encode(public_key, &pk_len);
 				if (!pk)
@@ -1169,7 +1168,7 @@ silc_command_reply(SilcClient client, SilcClientConnection conn,
 
 	case SILC_COMMAND_WHOIS:
 		{
-			SilcUInt32 idle, *user_modes;
+			SilcUInt32 *user_modes;
 			SilcDList channels;
 			SilcClientEntry client_entry;
 			char tmp[1024], *tmp2;
@@ -1189,7 +1188,7 @@ silc_command_reply(SilcClient client, SilcClientConnection conn,
 			(void)va_arg(ap, char *);
 			channels = va_arg(ap, SilcDList);
 			(void)va_arg(ap, SilcUInt32);
-			idle = va_arg(ap, SilcUInt32);
+			va_arg(ap, SilcUInt32); /* idle */
 			(void)va_arg(ap, unsigned char *);
 			user_modes = va_arg(ap, SilcUInt32 *);
 

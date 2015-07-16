@@ -109,7 +109,7 @@ get_element_devices(const gchar *element_name)
 			!(pspec = gst_property_probe_get_property(probe, "device"))) {
 		purple_debug_info("vvconfig", "'%s' - no device\n", element_name);
 	} else {
-		gint n;
+		gsize n;
 		GValueArray *array;
 
 		/* Set autoprobe[-fps] to FALSE to avoid delays when probing. */
@@ -131,7 +131,10 @@ get_element_devices(const gchar *element_name)
 			const gchar *name;
 			const gchar *device_name;
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+			/* GValueArray is in gstreamer-0.10 API */
 			device = g_value_array_get_nth(array, n);
+G_GNUC_END_IGNORE_DEPRECATIONS
 			g_object_set_property(G_OBJECT(element), "device", device);
 			if (gst_element_set_state(element, GST_STATE_READY)
 					!= GST_STATE_CHANGE_SUCCESS) {

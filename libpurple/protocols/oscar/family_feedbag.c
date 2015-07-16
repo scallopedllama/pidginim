@@ -80,7 +80,7 @@ aim_ssi_type_to_string(guint16 type)
 		{ 0x0020, "ICQ-MDir" },
 		{ 0x0029, "Facebook" },
 	};
-	int i;
+	size_t i;
 	for (i = 0; i < G_N_ELEMENTS(type_strings); i++) {
 		if (type_strings[i].type == type) {
 			return type_strings[i].string;
@@ -1089,8 +1089,8 @@ int aim_ssi_seticon(OscarData *od, const guint8 *iconsum, guint8 iconsumlen)
 
 	/* Need to add the 0x00d5 TLV to the TLV chain */
 	csumdata = (guint8 *)g_malloc((iconsumlen+2)*sizeof(guint8));
-	aimutil_put8(&csumdata[0], 0x00);
-	aimutil_put8(&csumdata[1], iconsumlen);
+	(void)aimutil_put8(&csumdata[0], 0x00);
+	(void)aimutil_put8(&csumdata[1], iconsumlen);
 	memcpy(&csumdata[2], iconsum, iconsumlen);
 	aim_tlvlist_replace_raw(&tmp->data, 0x00d5, (iconsumlen+2) * sizeof(guint8), csumdata);
 	g_free(csumdata);

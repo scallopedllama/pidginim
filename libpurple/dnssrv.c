@@ -49,6 +49,8 @@
 #define T_TXT	PurpleDnsTypeTxt
 #endif
 
+#define MAX_ADDR_RESPONSE_LEN 1048576
+
 #include "debug.h"
 #include "dnssrv.h"
 #include "eventloop.h"
@@ -481,6 +483,10 @@ resolved(gpointer data, gint source, PurpleInputCondition cond)
 
 	if (read(source, &type, sizeof(type)) == sizeof(type)) {
 		if (read(source, &size, sizeof(size)) == sizeof(size)) {
+			if (size < -1 || size > MAX_ADDR_RESPONSE_LEN) {
+				purple_debug_warning("dnssrv", "res_query returned invalid number\n");
+				size = 0;
+			}
 			if (size == -1 || size == 0) {
 				if (size == -1) {
 					purple_debug_warning("dnssrv", "res_query returned an error\n");
@@ -538,12 +544,20 @@ resolved(gpointer data, gint source, PurpleInputCondition cond)
 							responses = NULL;
 							break;
 						}
+						if (len > MAX_ADDR_RESPONSE_LEN) {
+							purple_debug_error("dnssrv", "we've read invalid number\n");
+							size = 0;
+							g_list_foreach(responses, (GFunc)purple_txt_response_destroy, NULL);
+							g_list_free(responses);
+							responses = NULL;
+							break;
+						}
 
 						res = g_new0(PurpleTxtResponse, 1);
 						res->content = g_new0(gchar, len);
 
 						red = read(source, res->content, len);
-						if (red != len) {
+						if (red < 0 || (gsize)red != len) {
 							purple_debug_error("dnssrv","unable to read txt "
 									"response: %s\n", g_strerror(errno));
 							size = 0;
@@ -751,7 +765,7 @@ purple_srv_resolve_account(PurpleAccount *account, const char *protocol,
 	proxy_type = purple_proxy_info_get_type(
 		purple_proxy_get_setup(account));
 	if (proxy_type == PURPLE_PROXY_TOR) {
-		purple_debug_info("dnssrv", "Aborting SRV lookup in Tor Proxy mode.");
+		purple_debug_info("dnssrv", "Aborting SRV lookup in Tor Proxy mode.\n");
 		cb(NULL, 0, extradata);
 		return NULL;
 	}
@@ -869,7 +883,7 @@ PurpleSrvTxtQueryData *purple_txt_resolve_account(PurpleAccount *account,
 	proxy_type = purple_proxy_info_get_type(
 		purple_proxy_get_setup(account));
 	if (proxy_type == PURPLE_PROXY_TOR) {
-		purple_debug_info("dnssrv", "Aborting TXT lookup in Tor Proxy mode.");
+		purple_debug_info("dnssrv", "Aborting TXT lookup in Tor Proxy mode.\n");
 		cb(NULL, extradata);
 		return NULL;
 	}

@@ -423,8 +423,8 @@ msim_store_user_info(MsimSession *session, const MsimMessage *msg, MsimUser *use
 		return FALSE;
 	}
 
-	if (msim_msg_get_integer(msg, "dsn") == MG_OWN_IM_INFO_DSN &&
-		msim_msg_get_integer(msg, "lid") == MG_OWN_IM_INFO_LID)
+	if (msim_msg_get_integer(msg, "dsn") == (guint)MG_OWN_IM_INFO_DSN &&
+		msim_msg_get_integer(msg, "lid") == (guint)MG_OWN_IM_INFO_LID)
 	{
 		/*
 		 * Some of this info will be available on the buddy list if the
@@ -452,8 +452,8 @@ msim_store_user_info(MsimSession *session, const MsimMessage *msg, MsimUser *use
 								session->show_only_to_list ? 1 : 0,
 								session->privacy_mode & 1),
 				NULL);
-	} else if (msim_msg_get_integer(msg, "dsn") == MG_OWN_MYSPACE_INFO_DSN &&
-			msim_msg_get_integer(msg, "lid") == MG_OWN_MYSPACE_INFO_LID) {
+	} else if (msim_msg_get_integer(msg, "dsn") == (guint)MG_OWN_MYSPACE_INFO_DSN &&
+			msim_msg_get_integer(msg, "lid") == (guint)MG_OWN_MYSPACE_INFO_LID) {
 		/* TODO: same as above, but for MySpace info. */
 	}
 
@@ -619,14 +619,16 @@ static void msim_username_is_set_cb(MsimSession *session, const MsimMessage *use
 	MsimMessage *body;
 
 	guint rid;
-	gint cmd,dsn,uid,lid,code;
+	gint cmd,dsn,lid,code;
 	/* \persistr\\cmd\258\dsn\9\uid\204084363\lid\14\rid\369\body\UserName=TheAlbinoRhino1.Code=0\final\ */
 
 	purple_debug_info("msim","username_is_set made\n");
 
 	cmd = msim_msg_get_integer(userinfo, "cmd");
 	dsn = msim_msg_get_integer(userinfo, "dsn");
+#if 0
 	uid = msim_msg_get_integer(userinfo, "uid");
+#endif
 	lid = msim_msg_get_integer(userinfo, "lid");
 	body = msim_msg_get_dictionary(userinfo, "body");
 	errmsg = _("An error occurred while trying to set the username.  "

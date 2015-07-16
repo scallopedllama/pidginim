@@ -30,7 +30,7 @@
 #include "prpl.h"
 #include "network.h"
 
-#define YAHOO_PAGER_HOST_REQ_URL "http://vcs1.msg.yahoo.com/capacity"
+#define YAHOO_PAGER_HOST_REQ_URL "http://vcs2.msg.yahoo.com/capacity"
 #define YAHOO_PAGER_HOST_FALLBACK "scsa.msg.yahoo.com"
 #define YAHOO_PAGER_PORT 5050
 #define YAHOO_PAGER_PORT_P2P 5101
@@ -129,7 +129,7 @@ enum yahoo_status {
 	YAHOO_STATUS_WEBLOGIN = 0x5a55aa55,
 	YAHOO_STATUS_OFFLINE = 0x5a55aa56, /* don't ask */
 	YAHOO_STATUS_TYPING = 0x16,
-	YAHOO_STATUS_DISCONNECTED = 0xffffffff /* in ymsg 15. doesnt mean the normal sense of 'disconnected' */
+	YAHOO_STATUS_DISCONNECTED = -1 /* 0xffffffff; in ymsg 15. doesnt mean the normal sense of 'disconnected' */
 };
 
 /*

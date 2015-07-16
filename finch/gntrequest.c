@@ -268,7 +268,7 @@ finch_request_action(const char *title, const char *primary,
 		va_list actions)
 {
 	GntWidget *window, *box, *button, *focus = NULL;
-	int i;
+	gsize i;
 
 	window = setup_request_window(title, primary, secondary, PURPLE_REQUEST_ACTION);
 
@@ -287,7 +287,7 @@ finch_request_action(const char *title, const char *primary,
 		g_object_set_data(G_OBJECT(button), "activate-id", GINT_TO_POINTER(i));
 		g_signal_connect(G_OBJECT(button), "activate", G_CALLBACK(request_action_cb), window);
 
-		if (i == default_value)
+		if (default_value >= 0 && i == (gsize)default_value)
 			focus = button;
 	}
 
@@ -854,8 +854,11 @@ void finch_request_save_in_prefs(gpointer null, PurpleRequestFields *allfields)
 				case PURPLE_PREF_INT:
 				{
 					long int tmp = GPOINTER_TO_INT(val);
-					if (type == PURPLE_REQUEST_FIELD_LIST) /* Lists always return string */
-						sscanf(val, "%ld", &tmp);
+					if (type == PURPLE_REQUEST_FIELD_LIST) {
+						/* Lists always return string */
+						if (sscanf(val, "%ld", &tmp) != 1)
+							tmp = 0;
+					}
 					purple_prefs_set_int(id, (gint)tmp);
 					break;
 				}

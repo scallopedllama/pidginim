@@ -96,7 +96,8 @@ msn_callback_state_free(MsnCallbackState *state)
 	g_free(state->old_group_name);
 	g_free(state->new_group_name);
 	g_free(state->guid);
-	xmlnode_free(state->body);
+	if (state->body)
+		xmlnode_free(state->body);
 
 	g_free(state);
 }
@@ -487,12 +488,6 @@ msn_parse_contact_list(MsnSession *session, xmlnode *node)
 	 * this is not handled yet
 	 */
 	if ((fault = xmlnode_get_child(node, "Body/Fault"))) {
-		if ((faultnode = xmlnode_get_child(fault, "faultstring"))) {
-			char *faultstring = xmlnode_get_data(faultnode);
-			purple_debug_info("msn", "Retrieving contact list failed: %s\n",
-				faultstring);
-			g_free(faultstring);
-		}
 		if ((faultnode = xmlnode_get_child(fault, "detail/errorcode"))) {
 			char *errorcode = xmlnode_get_data(faultnode);
 
@@ -505,7 +500,15 @@ msn_parse_contact_list(MsnSession *session, xmlnode *node)
 			g_free(errorcode);
 		}
 
-		msn_get_contact_list(session, MSN_PS_INITIAL, NULL);
+		if ((faultnode = xmlnode_get_child(fault, "faultstring"))) {
+			char *faultstring = xmlnode_get_data(faultnode);
+			purple_debug_info("msn", "Retrieving contact list failed: %s\n",
+				faultstring);
+			msn_session_set_error(session, MSN_ERROR_BAD_BLIST, faultstring);
+			g_free(faultstring);
+		} else {
+			msn_session_set_error(session, MSN_ERROR_BAD_BLIST, NULL);
+		}
 		return FALSE;
 	} else {
 		xmlnode *service;
@@ -1694,6 +1697,7 @@ msn_del_contact_from_list(MsnSession *session, MsnCallbackState *state,
 	msn_callback_state_set_who(state, passport);
 
 	user = msn_userlist_find_user(session->userlist, passport);
+	g_return_if_fail(user != NULL);
 
 	if (list == MSN_LIST_PL) {
 		partner_scenario = MSN_PS_CONTACT_API;
