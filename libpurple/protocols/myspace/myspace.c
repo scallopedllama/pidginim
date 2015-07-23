@@ -634,11 +634,11 @@ msim_compute_login_response(const gchar nonce[2 * NONCE_SIZE],
 #ifdef SEND_OUR_IP_ADDRESSES
 	/* TODO: Obtain IPs of network interfaces instead of using this hardcoded value */
 	g_string_set_size(data, data->len + 4);
-	msim_put32(data->str + data->len - 4, MSIM_LOGIN_IP_LIST_LEN);
+	(void)msim_put32(data->str + data->len - 4, MSIM_LOGIN_IP_LIST_LEN);
 	g_string_append_len(data, MSIM_LOGIN_IP_LIST, MSIM_LOGIN_IP_LIST_LEN);
 #else
 	g_string_set_size(data, data->len + 4);
-	msim_put32(data->str + data->len - 4, 0);
+	(void)msim_put32(data->str + data->len - 4, 0);
 #endif /* !SEND_OUR_IP_ADDRESSES */
 
 	data_out = g_new0(guchar, data->len);
@@ -1040,7 +1040,7 @@ msim_add_contact_from_server_cb(MsimSession *session, const MsimMessage *user_lo
 	/* TODO: use 'Position' in contact_info to take into account where buddy is */
 	purple_blist_add_buddy(buddy, NULL, group, NULL /* insertion point */);
 
-	if (strtol(username, NULL, 10) == uid) {
+	if (strtoul(username, NULL, 10) == uid) {
 		/*
 		 * This user has not set their username!  Set their server
 		 * alias to their display name so that we don't see a bunch
@@ -1776,10 +1776,10 @@ msim_process_reply(MsimSession *session, MsimMessage *msg)
 	lid = msim_msg_get_integer(msg, "lid");
 
 	/* Unsolicited messages */
-	if (cmd == (MSIM_CMD_BIT_REPLY | MSIM_CMD_GET)) {
-		if (dsn == MG_SERVER_INFO_DSN && lid == MG_SERVER_INFO_LID) {
+	if (cmd == (guint)(MSIM_CMD_BIT_REPLY | MSIM_CMD_GET)) {
+		if (dsn == (guint)MG_SERVER_INFO_DSN && lid == (guint)MG_SERVER_INFO_LID) {
 			return msim_process_server_info(session, msg);
-		} else if (dsn == MG_WEB_CHALLENGE_DSN && lid == MG_WEB_CHALLENGE_LID) {
+		} else if (dsn == (guint)MG_WEB_CHALLENGE_DSN && lid == (guint)MG_WEB_CHALLENGE_LID) {
 			return msim_web_challenge(session, msg);
 		}
 	}
@@ -2989,7 +2989,7 @@ msim_send_raw(MsimSession *session, const gchar *msg)
 	purple_debug_info("msim", "msim_send_raw: writing <%s>\n", msg);
 	len = strlen(msg);
 
-	return msim_send_really_raw(session->gc, msg, len) == len;
+	return msim_send_really_raw(session->gc, msg, len) == (int)len;
 }
 
 static GHashTable *
@@ -3563,7 +3563,7 @@ msim_uri_handler(const gchar *proto, const gchar *cmd, GHashTable *params)
 	l = purple_accounts_get_all();
 	while (l) {
 		if (purple_account_is_connected(l->data) &&
-			(uid == 0 || purple_account_get_int(l->data, "uid", 0) == uid)) {
+			(uid == 0 || purple_account_get_int(l->data, "uid", 0) == (int)uid)) {
 			account = l->data;
 			break;
 		}

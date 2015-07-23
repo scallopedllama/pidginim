@@ -129,7 +129,7 @@ purple_util_uninit(void)
 gchar *
 purple_base16_encode(const guchar *data, gsize len)
 {
-	int i;
+	gsize i;
 	gchar *ascii = NULL;
 
 	g_return_val_if_fail(data != NULL, NULL);
@@ -146,7 +146,7 @@ purple_base16_encode(const guchar *data, gsize len)
 guchar *
 purple_base16_decode(const char *str, gsize *ret_len)
 {
-	int len, i, accumulator = 0;
+	gsize len, i, accumulator = 0;
 	guchar *data;
 
 	g_return_val_if_fail(str != NULL, NULL);
@@ -193,7 +193,7 @@ purple_base16_decode(const char *str, gsize *ret_len)
 gchar *
 purple_base16_encode_chunked(const guchar *data, gsize len)
 {
-	int i;
+	gsize i;
 	gchar *ascii = NULL;
 
 	g_return_val_if_fail(data != NULL, NULL);
@@ -1157,6 +1157,7 @@ purple_markup_find_tag(const char *needle, const char *haystack,
 				case '"':
 				case '\'':
 					in_quotes = close;
+					/* fall through */
 				case '=':
 					{
 						size_t len = close - cur;
@@ -1169,11 +1170,12 @@ purple_markup_find_tag(const char *needle, const char *haystack,
 
 						in_attr = FALSE;
 						cur = close + 1;
-						break;
 					}
+					break;
 				case ' ':
 				case '>':
 					in_attr = FALSE;
+					/* fall through */
 				default:
 					cur = close;
 					break;
@@ -1192,6 +1194,7 @@ purple_markup_find_tag(const char *needle, const char *haystack,
 				case '"':
 				case '\'':
 					in_quotes = cur;
+					/* fall through */
 				default:
 					cur++;
 					break;
@@ -1990,13 +1993,12 @@ purple_markup_strip_html(const char *str)
 				 * address the link was pointing to. */
 				else if (href != NULL && g_ascii_strncasecmp(str2 + i, "</a>", 4) == 0)
 				{
-
 					size_t hrlen = strlen(href);
 
 					/* Only insert the href if it's different from the CDATA. */
-					if ((hrlen != j - href_st ||
+					if ((hrlen != (gsize)(j - href_st) ||
 					     strncmp(str2 + href_st, href, hrlen)) &&
-					    (hrlen != j - href_st + 7 || /* 7 == strlen("http://") */
+					    (hrlen != (gsize)(j - href_st + 7) || /* 7 == strlen("http://") */
 					     strncmp(str2 + href_st, href + 7, hrlen - 7)))
 					{
 						str2[j++] = ' ';
@@ -2613,6 +2615,14 @@ purple_util_write_data_to_file_absolute(const char *filename_full, const char *d
 	byteswritten = fwrite(data, 1, real_size, file);
 
 #ifdef HAVE_FILENO
+#ifndef _WIN32
+	/* Set file permissions */
+	if (fchmod(fileno(file), S_IRUSR | S_IWUSR) == -1) {
+		purple_debug_error("util", "Error setting permissions of "
+			"file %s: %s\n", filename_temp, g_strerror(errno));
+	}
+#endif
+
 	/* Apparently XFS (and possibly other filesystems) do not
 	 * guarantee that file data is flushed before file metadata,
 	 * so this procedure is insufficient without some flushage. */
@@ -2650,6 +2660,15 @@ purple_util_write_data_to_file_absolute(const char *filename_full, const char *d
 		g_free(filename_temp);
 		return FALSE;
 	}
+
+#ifndef _WIN32
+	/* copy-pasta! */
+	if (fchmod(fd, S_IRUSR | S_IWUSR) == -1) {
+		purple_debug_error("util", "Error setting permissions of "
+			"file %s: %s\n", filename_temp, g_strerror(errno));
+	}
+#endif
+
 	if (fsync(fd) < 0) {
 		purple_debug_error("util", "Error syncing %s: %s\n",
 				   filename_temp, g_strerror(errno));
@@ -2676,8 +2695,12 @@ purple_util_write_data_to_file_absolute(const char *filename_full, const char *d
 		g_free(filename_temp);
 		return FALSE;
 	}
-	/* Use stat to be absolutely sure. */
-	if ((g_stat(filename_temp, &st) == -1) || (st.st_size != real_size))
+#ifndef __COVERITY__
+	/* Use stat to be absolutely sure.
+	 * It causes TOCTOU coverity warning (against g_rename below),
+	 * but it's not a threat for us.
+	 */
+	if ((g_stat(filename_temp, &st) == -1) || ((gsize)st.st_size != real_size))
 	{
 		purple_debug_error("util", "Error writing data to file %s: "
 				   "Incomplete file written; is your disk "
@@ -2686,15 +2709,7 @@ purple_util_write_data_to_file_absolute(const char *filename_full, const char *d
 		g_free(filename_temp);
 		return FALSE;
 	}
-
-#ifndef _WIN32
-	/* Set file permissions */
-	if (chmod(filename_temp, S_IRUSR | S_IWUSR) == -1)
-	{
-		purple_debug_error("util", "Error setting permissions of file %s: %s\n",
-						 filename_temp, g_strerror(errno));
-	}
-#endif
+#endif /* __COVERITY__ */
 
 	/* Rename to the REAL name */
 	if (g_rename(filename_temp, filename_full) == -1)
@@ -3290,7 +3305,7 @@ purple_str_size_to_units(size_t size)
 	float size_mag;
 	int size_index = 0;
 
-	if (size == -1) {
+	if (size == (size_t)-1) {
 		return g_strdup(_("Calculating..."));
 	}
 	else if (size == 0) {
@@ -3405,7 +3420,7 @@ void purple_got_protocol_handler_uri(const char *uri)
 		return;
 	}
 
-	len = MIN(sizeof(proto) - 1, (tmp - uri));
+	len = MIN(sizeof(proto) - 1, (gsize)(tmp - uri));
 
 	strncpy(proto, uri, len);
 	proto[len] = '\0';
@@ -3736,7 +3751,10 @@ parse_content_len(const char *data, gsize data_len)
 
 	p = find_header_content(data, data_len, "\nContent-Length: ");
 	if (p) {
-		sscanf(p, "%" G_GSIZE_FORMAT, &content_len);
+		if (sscanf(p, "%" G_GSIZE_FORMAT, &content_len) != 1) {
+			purple_debug_warning("util", "invalid number format\n");
+			content_len = 0;
+		}
 		purple_debug_misc("util", "parsed %" G_GSIZE_FORMAT "\n", content_len);
 	}
 
@@ -3822,13 +3840,19 @@ url_fetch_recv_cb(gpointer url_data, gint source, PurpleInputCondition cond)
 	char *data_cursor;
 	gboolean got_eof = FALSE;
 
+	if (!gfud->is_ssl && source < 0) {
+		g_warn_if_reached();
+		len = -1;
+		errno = EINVAL;
+	}
+
 	/*
 	 * Read data in a loop until we can't read any more!  This is a
 	 * little confusing because we read using a different function
 	 * depending on whether the socket is ssl or cleartext.
 	 */
 	while ((gfud->is_ssl && ((len = purple_ssl_read(gfud->ssl_connection, buf, sizeof(buf))) > 0)) ||
-			(!gfud->is_ssl && (len = read(source, buf, sizeof(buf))) > 0))
+		(!gfud->is_ssl && source >= 0 && (len = read(source, buf, sizeof(buf))) > 0))
 	{
 		if((gfud->len + len) > gfud->max_len) {
 			purple_util_fetch_url_error(gfud, _("Error reading from %s: response too long (%d bytes limit)"),
@@ -4082,7 +4106,7 @@ url_fetch_send_cb(gpointer data, gint source, PurpleInputCondition cond)
 	}
 	gfud->request_written += len;
 
-	if (gfud->request_written < total_len)
+	if (gfud->request_written < (gsize)total_len)
 		return;
 
 	/* We're done writing our request, now start reading the response */
@@ -4324,9 +4348,13 @@ purple_url_encode(const char *str)
 			buf[j++] = c;
 		} else {
 			int bytes = g_unichar_to_utf8(c, utf_char);
-			for (i = 0; i < bytes; i++) {
+			for (i = 0; (int)i < bytes; i++) {
 				if (j > (BUF_LEN - 4))
 					break;
+				if (i >= sizeof(utf_char)) {
+					g_warn_if_reached();
+					break;
+				}
 				sprintf(buf + j, "%%%02X", utf_char[i] & 0xff);
 				j += 3;
 			}
@@ -4581,7 +4609,7 @@ purple_utf8_salvage(const char *str)
 	workstr = g_string_sized_new(strlen(str));
 
 	do {
-		g_utf8_validate(str, -1, &end);
+		(void)g_utf8_validate(str, -1, &end);
 		workstr = g_string_append_len(workstr, str, end - str);
 		str = end;
 		if (*str == '\0')
@@ -4644,7 +4672,11 @@ purple_utf8_strip_unprintables(const gchar *str)
 G_CONST_RETURN gchar *
 purple_gai_strerror(gint errnum)
 {
+#if GLIB_CHECK_VERSION(2, 32, 0)
+	static GPrivate msg_private = G_PRIVATE_INIT(g_free);
+#else
 	static GStaticPrivate msg_private = G_STATIC_PRIVATE_INIT;
+#endif
 	char *msg;
 	int saved_errno = errno;
 
@@ -4672,11 +4704,19 @@ purple_gai_strerror(gint errnum)
 		}
 	}
 
+#if GLIB_CHECK_VERSION(2, 32, 0)
+	msg = g_private_get(&msg_private);
+#else
 	msg = g_static_private_get(&msg_private);
+#endif
 	if (!msg)
 	{
 		msg = g_new(gchar, 64);
+#if GLIB_CHECK_VERSION(2, 32, 0)
+		g_private_set(&msg_private, msg);
+#else
 		g_static_private_set(&msg_private, msg, g_free);
+#endif
 	}
 
 	sprintf(msg, "unknown error (%d)", errnum);
@@ -4801,7 +4841,7 @@ purple_utf8_has_word(const char *haystack, const char *needle)
 
 	while ((p = strstr(start, pin)) != NULL) {
 		prev_char = g_utf8_find_prev_char(hay, p);
-		before = -2;
+		before = (gunichar)-2;
 		if (prev_char) {
 			before = g_utf8_get_char(prev_char);
 		}
@@ -4812,8 +4852,8 @@ purple_utf8_has_word(const char *haystack, const char *needle)
 				   ("!g_unichar_isalnum()" is not a valid way to determine word
 				    boundaries, but it is the only reasonable thing to do here),
 				   and isn't the '&' from a "&amp;" or some such entity*/
-				(before != -2 && !g_unichar_isalnum(before) && *(p - 1) != '&'))
-				&& after != -2 && !g_unichar_isalnum(after)) {
+				(before != (gunichar)-2 && !g_unichar_isalnum(before) && *(p - 1) != '&'))
+				&& after != (gunichar)-2 && !g_unichar_isalnum(after)) {
 			ret = TRUE;
 			break;
 		}
@@ -4967,9 +5007,13 @@ purple_escape_filename(const char *str)
 			buf[j++] = c;
 		} else {
 			int bytes = g_unichar_to_utf8(c, utf_char);
-			for (i = 0; i < bytes; i++) {
+			for (i = 0; (int)i < bytes; i++) {
 				if (j > (BUF_LEN - 4))
 					break;
+				if (i >= sizeof(utf_char)) {
+					g_warn_if_reached();
+					break;
+				}
 				sprintf(buf + j, "%%%02x", utf_char[i] & 0xff);
 				j += 3;
 			}

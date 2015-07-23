@@ -126,7 +126,8 @@ make_word_proper(const gchar *word)
 	gchar *ret;
 
 	bytes = g_unichar_to_utf8(g_unichar_toupper(g_utf8_get_char(word)), buf);
-	buf[MIN(bytes, sizeof(buf) - 1)] = '\0';
+	g_assert(bytes >= 0);
+	buf[MIN((gsize)bytes, sizeof(buf) - 1)] = '\0';
 
 	ret = g_strconcat(buf, g_utf8_offset_to_pointer(lower, 1), NULL);
 	g_free(lower);
@@ -675,10 +676,10 @@ spellchk_new_attach(PurpleConversation *conv)
 	return;
 }
 
-static int buf_get_line(char *ibuf, char **buf, int *position, gsize len)
+static int buf_get_line(char *ibuf, char **buf, gsize *position, gsize len)
 {
-	int pos = *position;
-	int spos = pos;
+	gsize pos = *position;
+	gsize spos = pos;
 
 	if (pos == len)
 		return 0;
@@ -1775,23 +1776,22 @@ static void load_conf(void)
 	GHashTable *hashes;
 	char bad[82] = "";
 	char good[256] = "";
-	int pnt = 0;
+	gsize pnt = 0;
 	gsize size;
 	gboolean complete = TRUE;
 	gboolean case_sensitive = FALSE;
 
 	buf = g_build_filename(purple_user_dir(), "dict", NULL);
-	g_file_get_contents(buf, &ibuf, &size, NULL);
-	g_free(buf);
-	if (!ibuf) {
+	if (!(g_file_get_contents(buf, &ibuf, &size, NULL) && ibuf)) {
 		ibuf = g_strdup(defaultconf);
 		size = strlen(defaultconf);
 	}
+	g_free(buf);
 
 	model = gtk_list_store_new((gint)N_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_BOOLEAN);
 	hashes = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
-	while (buf_get_line(ibuf, &buf, &pnt, size)) {
+	while (ibuf && buf_get_line(ibuf, &buf, &pnt, size)) {
 		if (*buf != '#') {
 			if (!g_ascii_strncasecmp(buf, "BAD ", 4))
 			{
