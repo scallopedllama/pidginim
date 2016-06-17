@@ -954,7 +954,7 @@ jabber_message_smileyfy_xhtml(JabberMessage *jm, const char *xhtml)
 					jabber_data_find_local_by_alt(shortcut);
 				PurpleStoredImage *image = purple_smiley_get_stored_image(smiley);
 
-				if ( 1 ) { //purple_imgstore_get_size(image) <= JABBER_DATA_MAX_SIZE) {
+				if (purple_imgstore_get_size(image) <= JABBER_DATA_MAX_SIZE) {
 					/* the object has not been sent before */
 					if (!data) {
 						const gchar *ext = purple_imgstore_get_extension(image);

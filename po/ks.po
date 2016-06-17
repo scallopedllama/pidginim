@@ -1,31 +1,31 @@
-# translation of lo.po to Lao
+# SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 #
-# Anousak Souphavanh <anousak@gmail.com>, 2007, 2009.
+# Translators:
 msgid ""
 msgstr ""
-"Project-Id-Version: lo\n"
+"Project-Id-Version: Pidgin\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-02-02 10:38-0800\n"
-"PO-Revision-Date: 2009-04-29 09:28+0700\n"
-"Last-Translator: Anousak Souphavanh <anousak@gmail.com>\n"
-"Language-Team: Lao <lo@li.org>\n"
-"Language: \n"
+"POT-Creation-Date: 2014-11-22 10:22-0800\n"
+"PO-Revision-Date: 2014-11-20 10:22+0000\n"
+"Last-Translator: Richard Laager <rlaager@wiktel.com>\n"
+"Language-Team: Kashmiri (http://www.transifex.com/projects/p/pidgin/language/"
+"ks/)\n"
+"Language: ks\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-# "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 #. Translators may want to transliterate the name.
 #. It is not to be translated.
 msgid "Finch"
-msgstr "ຟີນຊ໌"
+msgstr ""
 
 #, c-format
 msgid "%s. Try `%s -h' for more information.\n"
-msgstr "%s. ລອງ `%s -h' ເພື່ອຫາຂໍ້ມູນເພີ້ມ.\n"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -48,17 +48,16 @@ msgstr ""
 
 #. the user did not fill in the captcha
 msgid "Error"
-msgstr "ຜິດພາດ"
+msgstr ""
 
-#, fuzzy
 msgid "Account was not modified"
-msgstr "ບໍ່ໃດ້ເພີ້ມບັນຊີ "
+msgstr ""
 
 msgid "Account was not added"
-msgstr "ບໍ່ໃດ້ເພີ້ມບັນຊີ "
+msgstr ""
 
 msgid "Username of an account must be non-empty."
-msgstr "ລະຫັດຜູ້ໃຊ້ຕ້ອງໃຫ້ມີຂໍ້ມູນ"
+msgstr ""
 
 msgid ""
 "The account's protocol cannot be changed while it is connected to the server."
@@ -69,34 +68,34 @@ msgid ""
 msgstr ""
 
 msgid "New mail notifications"
-msgstr "ອີເເມວລ໌ໃຫ່ມເຕືອນ"
+msgstr ""
 
 msgid "Remember password"
-msgstr "ຈື່ລະຫັດພານ"
+msgstr ""
 
 msgid "There are no protocol plugins installed."
 msgstr ""
 
 msgid "(You probably forgot to 'make install'.)"
-msgstr "ຄິດວ່າທ່ານລືມຂຽນ 'make install'"
+msgstr ""
 
 msgid "Modify Account"
-msgstr "ປັບບັນຊີ"
+msgstr ""
 
 msgid "New Account"
-msgstr "ບັນຊີໃຫມ່"
+msgstr ""
 
 msgid "Protocol:"
-msgstr "ໂປໂຕໂກນ:"
+msgstr ""
 
 msgid "Username:"
-msgstr "ຊື່ຜູ້ໃຊ້:"
+msgstr ""
 
 msgid "Password:"
-msgstr "ລະຫັດພ່ານ:"
+msgstr ""
 
 msgid "Alias:"
-msgstr "ຊື່ຫລີ້ນ:"
+msgstr ""
 
 #. Register checkbox
 msgid "Create this account on the server"
@@ -105,37 +104,37 @@ msgstr ""
 #. Cancel button
 #. Cancel
 msgid "Cancel"
-msgstr "ຍົກເລີອກ"
+msgstr ""
 
 #. Save button
 #. Save
 msgid "Save"
-msgstr "ບັນທຶກ"
+msgstr ""
 
 #, c-format
 msgid "Are you sure you want to delete %s?"
-msgstr "ເເນ່ທີ່ຈະລຶບ %s?"
+msgstr ""
 
 msgid "Delete Account"
-msgstr "ລຶບບັນຊີ"
+msgstr ""
 
 #. Delete button
 msgid "Delete"
-msgstr "ລຶບ"
+msgstr ""
 
 msgid "Accounts"
-msgstr "ບັນຊີທົວໄປ"
+msgstr ""
 
 msgid "You can enable/disable accounts from the following list."
 msgstr ""
 
 #. Add button
 msgid "Add"
-msgstr "ເພີ້ມ"
+msgstr ""
 
 #. Modify button
 msgid "Modify"
-msgstr "ປັບ"
+msgstr ""
 
 #, c-format
 msgid "%s%s%s%s has made %s his or her buddy%s%s"
@@ -152,22 +151,20 @@ msgid "Authorize buddy?"
 msgstr ""
 
 msgid "Authorize"
-msgstr "ອະນຸມັດ"
+msgstr ""
 
 msgid "Deny"
-msgstr "ປະຕິເສດ"
+msgstr ""
 
 #, c-format
 msgid ""
 "Online: %d\n"
 "Total: %d"
 msgstr ""
-"ອອນລາຍ: %d\n"
-"ຈໍານວນລວມ: %d"
 
 #, c-format
 msgid "Account: %s (%s)"
-msgstr "ບັນຊີ: %s (%s)"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -1584,7 +1581,6 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#. Changing this string?  Look in add_purple_buddy_to_groups
 msgid "Buddies"
 msgstr ""
 
@@ -1684,10 +1680,19 @@ msgid ""
 "are not connecting to the service you believe you are."
 msgstr ""
 
+#. TODO: Find what the handle ought to be
+msgid "Certificate Information"
+msgstr ""
+
+msgid "Unable to find Issuer Certificate"
+msgstr ""
+
 #. Make messages
 #, c-format
 msgid ""
 "Common name: %s\n"
+"\n"
+"Issued By: %s\n"
 "\n"
 "Fingerprint (SHA1): %s\n"
 "\n"
@@ -1695,8 +1700,10 @@ msgid ""
 "Expiration date: %s\n"
 msgstr ""
 
-#. TODO: Find what the handle ought to be
-msgid "Certificate Information"
+msgid "(self-signed)"
+msgstr ""
+
+msgid "View Issuer Certificate"
 msgstr ""
 
 #. show error to user
@@ -1769,6 +1776,126 @@ msgstr ""
 msgid ""
 "Please enter the name of the user you wish to invite, along with an optional "
 "invite message."
+msgstr ""
+
+msgid "Whether the specified command should handle \"aim\" URLs"
+msgstr ""
+
+msgid ""
+"True if the command specified in the \"command\" key should handle \"aim\" "
+"URLs."
+msgstr ""
+
+msgid "The handler for \"aim\" URLs"
+msgstr ""
+
+msgid "The command used to handle \"aim\" URLs, if enabled."
+msgstr ""
+
+msgid "Run the command in a terminal"
+msgstr ""
+
+msgid ""
+"True if the command used to handle this type of URL should be run in a "
+"terminal."
+msgstr ""
+
+msgid "Whether the specified command should handle \"gg\" URLs"
+msgstr ""
+
+msgid ""
+"True if the command specified in the \"command\" key should handle \"gg\" "
+"URLs."
+msgstr ""
+
+msgid "The handler for \"gg\" URLs"
+msgstr ""
+
+msgid "The command used to handle \"gg\" URLs, if enabled."
+msgstr ""
+
+msgid "Whether the specified command should handle \"icq\" URLs"
+msgstr ""
+
+msgid ""
+"True if the command specified in the \"command\" key should handle \"icq\" "
+"URLs."
+msgstr ""
+
+msgid "The handler for \"icq\" URLs"
+msgstr ""
+
+msgid "The command used to handle \"icq\" URLs, if enabled."
+msgstr ""
+
+msgid "Whether the specified command should handle \"irc\" URLs"
+msgstr ""
+
+msgid ""
+"True if the command specified in the \"command\" key should handle \"irc\" "
+"URLs."
+msgstr ""
+
+msgid "The handler for \"irc\" URLs"
+msgstr ""
+
+msgid "The command used to handle \"irc\" URLs, if enabled."
+msgstr ""
+
+msgid "Whether the specified command should handle \"msnim\" URLs"
+msgstr ""
+
+msgid ""
+"True if the command specified in the \"command\" key should handle \"msnim\" "
+"URLs."
+msgstr ""
+
+msgid "The handler for \"msnim\" URLs"
+msgstr ""
+
+msgid "The command used to handle \"msnim\" URLs, if enabled."
+msgstr ""
+
+msgid "Whether the specified command should handle \"sip\" URLs"
+msgstr ""
+
+msgid ""
+"True if the command specified in the \"command\" key should handle \"sip\" "
+"URLs."
+msgstr ""
+
+msgid "The handler for \"sip\" URLs"
+msgstr ""
+
+msgid "The command used to handle \"sip\" URLs, if enabled."
+msgstr ""
+
+msgid "Whether the specified command should handle \"xmpp\" URLs"
+msgstr ""
+
+msgid ""
+"True if the command specified in the \"command\" key should handle \"xmpp\" "
+"URLs."
+msgstr ""
+
+msgid "The handler for \"xmpp\" URLs"
+msgstr ""
+
+msgid "The command used to handle \"xmpp\" URLs, if enabled."
+msgstr ""
+
+msgid "Whether the specified command should handle \"ymsgr\" URLs"
+msgstr ""
+
+msgid ""
+"True if the command specified in the \"command\" key should handle \"ymsgr\" "
+"URLs."
+msgstr ""
+
+msgid "The handler for \"ymsgr\" URLs"
+msgstr ""
+
+msgid "The command used to handle \"ymsgr\" URLs, if enabled."
 msgstr ""
 
 #, c-format
@@ -1930,126 +2057,6 @@ msgstr ""
 
 #, c-format
 msgid "File transfer from %s failed."
-msgstr ""
-
-msgid "Whether the specified command should handle \"aim\" URLs"
-msgstr ""
-
-msgid ""
-"True if the command specified in the \"command\" key should handle \"aim\" "
-"URLs."
-msgstr ""
-
-msgid "The handler for \"aim\" URLs"
-msgstr ""
-
-msgid "The command used to handle \"aim\" URLs, if enabled."
-msgstr ""
-
-msgid "Run the command in a terminal"
-msgstr ""
-
-msgid ""
-"True if the command used to handle this type of URL should be run in a "
-"terminal."
-msgstr ""
-
-msgid "Whether the specified command should handle \"gg\" URLs"
-msgstr ""
-
-msgid ""
-"True if the command specified in the \"command\" key should handle \"gg\" "
-"URLs."
-msgstr ""
-
-msgid "The handler for \"gg\" URLs"
-msgstr ""
-
-msgid "The command used to handle \"gg\" URLs, if enabled."
-msgstr ""
-
-msgid "Whether the specified command should handle \"icq\" URLs"
-msgstr ""
-
-msgid ""
-"True if the command specified in the \"command\" key should handle \"icq\" "
-"URLs."
-msgstr ""
-
-msgid "The handler for \"icq\" URLs"
-msgstr ""
-
-msgid "The command used to handle \"icq\" URLs, if enabled."
-msgstr ""
-
-msgid "Whether the specified command should handle \"irc\" URLs"
-msgstr ""
-
-msgid ""
-"True if the command specified in the \"command\" key should handle \"irc\" "
-"URLs."
-msgstr ""
-
-msgid "The handler for \"irc\" URLs"
-msgstr ""
-
-msgid "The command used to handle \"irc\" URLs, if enabled."
-msgstr ""
-
-msgid "Whether the specified command should handle \"msnim\" URLs"
-msgstr ""
-
-msgid ""
-"True if the command specified in the \"command\" key should handle \"msnim\" "
-"URLs."
-msgstr ""
-
-msgid "The handler for \"msnim\" URLs"
-msgstr ""
-
-msgid "The command used to handle \"msnim\" URLs, if enabled."
-msgstr ""
-
-msgid "Whether the specified command should handle \"sip\" URLs"
-msgstr ""
-
-msgid ""
-"True if the command specified in the \"command\" key should handle \"sip\" "
-"URLs."
-msgstr ""
-
-msgid "The handler for \"sip\" URLs"
-msgstr ""
-
-msgid "The command used to handle \"sip\" URLs, if enabled."
-msgstr ""
-
-msgid "Whether the specified command should handle \"xmpp\" URLs"
-msgstr ""
-
-msgid ""
-"True if the command specified in the \"command\" key should handle \"xmpp\" "
-"URLs."
-msgstr ""
-
-msgid "The handler for \"xmpp\" URLs"
-msgstr ""
-
-msgid "The command used to handle \"xmpp\" URLs, if enabled."
-msgstr ""
-
-msgid "Whether the specified command should handle \"ymsgr\" URLs"
-msgstr ""
-
-msgid ""
-"True if the command specified in the \"command\" key should handle \"ymsgr\" "
-"URLs."
-msgstr ""
-
-msgid "The handler for \"ymsgr\" URLs"
-msgstr ""
-
-msgid "The command used to handle \"ymsgr\" URLs, if enabled."
 msgstr ""
 
 msgid "<b><font color=\"red\">The logger has no read function</font></b>"
@@ -2685,6 +2692,56 @@ msgstr ""
 msgid "Tests to see that most things are working."
 msgstr ""
 
+msgid "TLS/SSL Versions"
+msgstr ""
+
+msgid "Minimum Version"
+msgstr ""
+
+msgid "Maximum Version"
+msgstr ""
+
+msgid "SSL 2"
+msgstr ""
+
+msgid "SSL 3"
+msgstr ""
+
+msgid "TLS 1.0"
+msgstr ""
+
+msgid "TLS 1.1"
+msgstr ""
+
+msgid "TLS 1.2"
+msgstr ""
+
+msgid "TLS 1.3"
+msgstr ""
+
+#. TODO: look into how to do this for older versions?
+msgid "Not Supported for NSS < 3.14"
+msgstr ""
+
+msgid "Ciphers"
+msgstr ""
+
+#. *< type
+#. *< ui_requirement
+#. *< flags
+#. *< dependencies
+#. *< priority
+#. *< id
+msgid "NSS Preferences"
+msgstr ""
+
+#. *< name
+#. *< version
+#. *  summary
+#. *  description
+msgid "Configure Ciphers and other Settings for the NSS SSL/TLS Plugin"
+msgstr ""
+
 #. Scheme name
 msgid "X.509 Certificates"
 msgstr ""
@@ -3010,13 +3067,13 @@ msgstr ""
 msgid "Chat _name:"
 msgstr ""
 
-#, c-format
-msgid "Unable to resolve hostname '%s': %s"
-msgstr ""
-
 #. 1. connect to server
 #. connect to the server
 msgid "Connecting"
+msgstr ""
+
+#, c-format
+msgid "Unable to resolve hostname: %s"
 msgstr ""
 
 msgid "Chat error"
@@ -3931,9 +3988,8 @@ msgstr ""
 msgid "Find Rooms"
 msgstr ""
 
-#, fuzzy
 msgid "Affiliations:"
-msgstr "ຊື່ຫລີ້ນ:"
+msgstr ""
 
 msgid "No users found"
 msgstr ""
@@ -4615,13 +4671,11 @@ msgstr ""
 msgid "Bored"
 msgstr ""
 
-#, fuzzy
 msgid "Brave"
-msgstr "ບັນທຶກ"
+msgstr ""
 
-#, fuzzy
 msgid "Calm"
-msgstr "ຍົກເລີອກ"
+msgstr ""
 
 msgid "Cautious"
 msgstr ""
@@ -4653,13 +4707,11 @@ msgstr ""
 msgid "Curious"
 msgstr ""
 
-#, fuzzy
 msgid "Dejected"
-msgstr "ລຶບ"
+msgstr ""
 
-#, fuzzy
 msgid "Depressed"
-msgstr "ລຶບ"
+msgstr ""
 
 msgid "Disappointed"
 msgstr ""
@@ -4757,9 +4809,8 @@ msgstr ""
 msgid "Mean"
 msgstr ""
 
-#, fuzzy
 msgid "Moody"
-msgstr "ປັບ"
+msgstr ""
 
 msgid "Nervous"
 msgstr ""
@@ -4782,9 +4833,8 @@ msgstr ""
 msgid "Relaxed"
 msgstr ""
 
-#, fuzzy
 msgid "Relieved"
-msgstr "ລຶບ"
+msgstr ""
 
 msgid "Remorseful"
 msgstr ""
@@ -5122,16 +5172,14 @@ msgstr ""
 msgid "This is the name that other MSN buddies will see you as."
 msgstr ""
 
-#, fuzzy
 msgid "This Location"
-msgstr "ຊື່ຫລີ້ນ:"
+msgstr ""
 
 msgid "This is the name that identifies this location"
 msgstr ""
 
-#, fuzzy
 msgid "Other Locations"
-msgstr "ຊື່ຫລີ້ນ:"
+msgstr ""
 
 msgid "You can sign out from other locations here"
 msgstr ""
@@ -5236,9 +5284,8 @@ msgstr ""
 msgid "Set Friendly Name..."
 msgstr ""
 
-#, fuzzy
 msgid "View Locations..."
-msgstr "ຊື່ຫລີ້ນ:"
+msgstr ""
 
 msgid "Set Home Phone Number..."
 msgstr ""
@@ -5570,8 +5617,8 @@ msgstr ""
 msgid "Unable to authenticate: %s"
 msgstr ""
 
-msgid ""
-"Your MSN buddy list is temporarily unavailable. Please wait and try again."
+#, c-format
+msgid "Your MSN buddy list is temporarily unavailable: %s"
 msgstr ""
 
 msgid "Handshaking"
@@ -5670,9 +5717,8 @@ msgid "Display Name"
 msgstr ""
 
 #. about me
-#, fuzzy
 msgid "About Me"
-msgstr "ບັນຊີທົວໄປ"
+msgstr ""
 
 #. where I live
 msgid "Where I Live"
@@ -5735,9 +5781,8 @@ msgstr ""
 msgid "There is no splash-screen currently available"
 msgstr ""
 
-#, fuzzy
 msgid "About"
-msgstr "ບັນຊີທົວໄປ"
+msgstr ""
 
 msgid "Search for user"
 msgstr ""
@@ -5745,9 +5790,8 @@ msgstr ""
 msgid "Search for a MXit contact"
 msgstr ""
 
-#, fuzzy
 msgid "Type search information"
-msgstr "%s. ລອງ `%s -h' ເພື່ອຫາຂໍ້ມູນເພີ້ມ.\n"
+msgstr ""
 
 msgid "_Search"
 msgstr ""
@@ -5813,9 +5857,8 @@ msgid "MXit ID"
 msgstr ""
 
 #. show the form to the user to complete
-#, fuzzy
 msgid "Register New MXit Account"
-msgstr "ບັນຊີໃຫມ່"
+msgstr ""
 
 msgid "Please fill in the following fields:"
 msgstr ""
@@ -6027,13 +6070,11 @@ msgstr ""
 msgid "Message Sending Error"
 msgstr ""
 
-#, fuzzy
 msgid "Status Error"
-msgstr "ຜິດພາດ"
+msgstr ""
 
-#, fuzzy
 msgid "Mood Error"
-msgstr "ຜິດພາດ"
+msgstr ""
 
 msgid "Invitation Error"
 msgstr ""
@@ -6098,9 +6139,8 @@ msgstr ""
 msgid "Rejected"
 msgstr ""
 
-#, fuzzy
 msgid "Deleted"
-msgstr "ລຶບ"
+msgstr ""
 
 msgid "MXit Advertising"
 msgstr ""
@@ -6978,9 +7018,8 @@ msgstr ""
 msgid "Depression"
 msgstr ""
 
-#, fuzzy
 msgid "At home"
-msgstr "ອະນຸມັດ"
+msgstr ""
 
 msgid "At work"
 msgstr ""
@@ -7359,10 +7398,8 @@ msgstr ""
 msgid "iTunes Music Store Link"
 msgstr ""
 
-# "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
-#, fuzzy
 msgid "Lunch"
-msgstr "ຟີນຊ໌"
+msgstr ""
 
 #, c-format
 msgid "Buddy Comment for %s"
@@ -9307,6 +9344,9 @@ msgstr ""
 msgid "Start Doodling"
 msgstr ""
 
+msgid "Activate which ID?"
+msgstr ""
+
 msgid "Select the ID you want to activate"
 msgstr ""
 
@@ -9837,6 +9877,22 @@ msgid ""
 "the old file has been renamed to %s~."
 msgstr ""
 
+msgid "Instant Messaging Client"
+msgstr ""
+
+msgid ""
+"Pidgin is a chat program which lets you log in to accounts on multiple chat "
+"networks simultaneously."
+msgstr ""
+
+msgid ""
+"This means that you can be chatting with friends on MSN, talking to a friend "
+"on Google Talk, and sitting in a Yahoo chat room all at the same time."
+msgstr ""
+
+msgid "The buddy list showing friends on different networks."
+msgstr ""
+
 msgid "Pidgin Internet Messenger"
 msgstr ""
 
@@ -10113,9 +10169,8 @@ msgstr ""
 msgid "Please update the necessary fields."
 msgstr ""
 
-#, fuzzy
 msgid "A_ccount"
-msgstr "ບັນຊີທົວໄປ"
+msgstr ""
 
 msgid ""
 "Please enter the appropriate information about the chat you would like to "
@@ -10349,9 +10404,9 @@ msgstr ""
 msgid "/Help/_About"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "<b>Account:</b> %s"
-msgstr "ບັນຊີ:"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -10835,10 +10890,8 @@ msgstr ""
 msgid "Close Find bar"
 msgstr ""
 
-# "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
-#, fuzzy
 msgid "Find:"
-msgstr "ຟີນຊ໌"
+msgstr ""
 
 #, c-format
 msgid "%d person in room"
@@ -11022,6 +11075,9 @@ msgstr ""
 msgid "Bengali-India"
 msgstr ""
 
+msgid "Bodo"
+msgstr ""
+
 msgid "Bosnian"
 msgstr ""
 
@@ -11059,6 +11115,9 @@ msgid "Esperanto"
 msgstr ""
 
 msgid "Spanish"
+msgstr ""
+
+msgid "Argentine Spanish"
 msgstr ""
 
 msgid "Estonian"
@@ -11100,9 +11159,6 @@ msgstr ""
 msgid "Hungarian"
 msgstr ""
 
-msgid "Armenian"
-msgstr ""
-
 msgid "Indonesian"
 msgstr ""
 
@@ -11118,6 +11174,9 @@ msgstr ""
 msgid "Ubuntu Georgian Translators"
 msgstr ""
 
+msgid "Kazakh"
+msgstr ""
+
 msgid "Khmer"
 msgstr ""
 
@@ -11130,13 +11189,19 @@ msgstr ""
 msgid "Korean"
 msgstr ""
 
+msgid "Kashmiri"
+msgstr ""
+
 msgid "Kurdish"
 msgstr ""
 
-msgid "Lao"
+msgid "Kurdish (Sorani)"
 msgstr ""
 
 msgid "Lithuanian"
+msgstr ""
+
+msgid "Latvian"
 msgstr ""
 
 msgid "Maithili"
@@ -11155,9 +11220,6 @@ msgid "Mongolian"
 msgstr ""
 
 msgid "Marathi"
-msgstr ""
-
-msgid "Malay"
 msgstr ""
 
 msgid "Burmese"
@@ -11202,6 +11264,9 @@ msgstr ""
 msgid "Russian"
 msgstr ""
 
+msgid "Sindhi"
+msgstr ""
+
 msgid "Slovak"
 msgstr ""
 
@@ -11235,10 +11300,21 @@ msgstr ""
 msgid "Thai"
 msgstr ""
 
+msgid "Tatar"
+msgstr ""
+
 msgid "Ukranian"
 msgstr ""
 
 msgid "Urdu"
+msgstr ""
+
+msgid "Uzbek"
+msgstr ""
+
+#. Translators: This is a person's name. For most languages we recommend
+#. not translating it.
+msgid "Akmal Khushvakov"
 msgstr ""
 
 msgid "Vietnamese"
@@ -11254,6 +11330,15 @@ msgid "Traditional Chinese"
 msgstr ""
 
 msgid "Amharic"
+msgstr ""
+
+msgid "Armenian"
+msgstr ""
+
+msgid "Lao"
+msgstr ""
+
+msgid "Malay"
 msgstr ""
 
 msgid "Turkish"
@@ -11324,17 +11409,16 @@ msgstr ""
 msgid "Past Translators"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s Translator Information"
-msgstr "%s. ລອງ `%s -h' ເພື່ອຫາຂໍ້ມູນເພີ້ມ.\n"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s Plugin Information"
-msgstr "%s. ລອງ `%s -h' ເພື່ອຫາຂໍ້ມູນເພີ້ມ.\n"
+msgstr ""
 
-#, fuzzy
 msgid "Plugin Information"
-msgstr "%s. ລອງ `%s -h' ເພື່ອຫາຂໍ້ມູນເພີ້ມ.\n"
+msgstr ""
 
 msgid "_Name"
 msgstr ""
@@ -11450,9 +11534,8 @@ msgstr ""
 msgid "New _Message..."
 msgstr ""
 
-#, fuzzy
 msgid "_Accounts"
-msgstr "ບັນຊີ:"
+msgstr ""
 
 msgid "Plu_gins"
 msgstr ""
@@ -12321,13 +12404,11 @@ msgstr ""
 msgid "T_CP Port:"
 msgstr ""
 
-#, fuzzy
 msgid "Use_rname:"
-msgstr "ຊື່ຜູ້ໃຊ້:"
+msgstr ""
 
-#, fuzzy
 msgid "Pass_word:"
-msgstr "ລະຫັດພ່ານ:"
+msgstr ""
 
 msgid "Seamonkey"
 msgstr ""
@@ -12437,9 +12518,8 @@ msgstr ""
 msgid "P_ort:"
 msgstr ""
 
-#, fuzzy
 msgid "User_name:"
-msgstr "ຊື່ຜູ້ໃຊ້:"
+msgstr ""
 
 msgid "Log _format:"
 msgstr ""
@@ -12842,9 +12922,8 @@ msgstr ""
 msgid "_Save File"
 msgstr ""
 
-#, fuzzy
 msgid "Do you really want to clear?"
-msgstr "ເເນ່ທີ່ຈະລຶບ %s?"
+msgstr ""
 
 msgid "Select color"
 msgstr ""
@@ -13053,11 +13132,10 @@ msgstr ""
 msgid "Other"
 msgstr ""
 
-#, fuzzy
 msgid ""
 "\n"
 "<b>Description:</b> "
-msgstr "ບັນຊີ:"
+msgstr ""
 
 #. Create the window.
 msgid "Service Discovery"
@@ -13967,7 +14045,7 @@ msgid "Remove IM window transparency on focus"
 msgstr ""
 
 msgid "Always on top"
-msgstr "ຢູ່ຂ້າງເທີງ ເລຶ້ອຍ ຯ "
+msgstr ""
 
 #. Buddy List trans options
 msgid "Buddy List Window"
@@ -14025,7 +14103,7 @@ msgid "Only when docked"
 msgstr ""
 
 msgid "Windows Pidgin Options"
-msgstr "ຈໍ ພິດຈິນ ໂຕເລືກ "
+msgstr ""
 
 msgid "Options specific to Pidgin for Windows."
 msgstr ""
@@ -14044,10 +14122,10 @@ msgstr ""
 #. *< priority
 #. *< id
 msgid "XMPP Console"
-msgstr "ຈໍ XMPP "
+msgstr ""
 
 msgid "Account: "
-msgstr "ບັນຊີ:"
+msgstr ""
 
 msgid "<font color='#777777'>Not connected to XMPP</font>"
 msgstr ""
@@ -14101,9 +14179,8 @@ msgid "Start Menu"
 msgstr ""
 
 #. Installer Subsection Text
-#, fuzzy
 msgid "Localizations"
-msgstr "ຊື່ຫລີ້ນ:"
+msgstr ""
 
 #. Installer Subsection Detailed Description
 msgid "Core Pidgin files and dlls"
@@ -14185,7 +14262,3 @@ msgstr ""
 
 msgid "You do not have permission to uninstall this application."
 msgstr ""
-
-#, fuzzy
-#~ msgid "QQ Error"
-#~ msgstr "ຜິດພາດ"
