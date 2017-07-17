@@ -933,8 +933,8 @@ jabber_conv_support_custom_smileys(JabberStream *js,
 			chat = jabber_chat_find_by_conv(conv);
 			if (chat) {
 				/* do not attempt to send custom smileys in a MUC with more than
-				 10 people, to avoid getting too many BoB requests */
-				return jabber_chat_get_num_participants(chat) <= 10 &&
+				 100 people, to avoid getting too many BoB requests */
+				return jabber_chat_get_num_participants(chat) <= 100 &&
 					jabber_chat_all_participants_have_capability(chat,
 						NS_BOB);
 			} else {
