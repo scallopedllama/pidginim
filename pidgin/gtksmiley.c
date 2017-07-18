@@ -332,7 +332,7 @@ static void do_add_file_cb(const char *filename, gpointer data)
 
 	g_free(s->filename);
 	s->filename = g_strdup(filename);
-	pixbuf = pidgin_pixbuf_new_from_file_at_scale(filename, 64, 64, FALSE);
+	pixbuf = pidgin_pixbuf_new_from_file_at_scale(filename, 128, 128, TRUE);
 	gtk_image_set_from_pixbuf(GTK_IMAGE(s->smiley_image), pixbuf);
 	if (pixbuf)
 		g_object_unref(G_OBJECT(pixbuf));
@@ -601,10 +601,12 @@ static void store_smiley_add(PurpleSmiley *smiley)
 		purple_imgstore_unref(img);
 
 		if (smiley_image != NULL) {
-			if (gdk_pixbuf_get_width(smiley_image) > 22 ||
-				gdk_pixbuf_get_height(smiley_image) > 22) {
-				sized_smiley = gdk_pixbuf_scale_simple(smiley_image,
-					22, 22, GDK_INTERP_HYPER);
+			int width = gdk_pixbuf_get_width(smiley_image);
+			int height = gdk_pixbuf_get_height(smiley_image);
+			if (width > 22 || height > 22) {
+				int target_height = 32;
+				float scale = ((float) target_height) / height;
+				sized_smiley = gdk_pixbuf_scale_simple(smiley_image,  (int) (((float) width) * scale ), target_height, GDK_INTERP_HYPER);
 				g_object_unref(G_OBJECT(smiley_image));
 			} else {
 				/* don't scale up smaller smileys, avoid blurryness */

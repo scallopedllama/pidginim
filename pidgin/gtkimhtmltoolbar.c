@@ -641,8 +641,9 @@ sort_smileys(struct smiley_button_list *ls, GtkIMHtmlToolbar *toolbar,
 
 		if (pixbuf != NULL) {
 			GdkPixbuf *resized;
-			resized = gdk_pixbuf_scale_simple(pixbuf, 24, 24,
-					GDK_INTERP_HYPER);
+			int target_height = 50;
+			float scale = ((float) target_height) / size.height;
+			resized = gdk_pixbuf_scale_simple(pixbuf, (int)(((float)size.width) * scale), target_height, GDK_INTERP_HYPER);
 
 			gtk_image_set_from_pixbuf(GTK_IMAGE(image), resized); /* This unrefs pixbuf */
 			gtk_widget_size_request(image, &size);
