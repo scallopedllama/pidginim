@@ -388,9 +388,6 @@ SectionGroupEnd
 !macroend
 SectionGroup /e $(URIHANDLERSSECTIONTITLE) SecURIHandlers
   !insertmacro URI_SECTION "aim"
-  !insertmacro URI_SECTION "msnim"
-  !insertmacro URI_SECTION "myim"
-  !insertmacro URI_SECTION "ymsgr"
   !insertmacro URI_SECTION "xmpp"
 SectionGroupEnd
 
@@ -506,15 +503,10 @@ Section Uninstall
     ; I can't think of an easy way to maintain a list in a single place
     Push "aim"
     Call un.UnregisterURIHandler
-    Push "msnim"
-    Call un.UnregisterURIHandler
-    Push "myim"
-    Call un.UnregisterURIHandler
-    Push "ymsgr"
-    Call un.UnregisterURIHandler
     Push "xmpp"
     Call un.UnregisterURIHandler
 
+    ; Some of these aren't shipped anymore. Delete them anyway.
     Delete "$INSTDIR\ca-certs\AddTrust_External_Root.pem"
     Delete "$INSTDIR\ca-certs\America_Online_Root_Certification_Authority_1.pem"
     Delete "$INSTDIR\ca-certs\AOL_Member_CA.pem"
@@ -545,6 +537,7 @@ Section Uninstall
     Delete "$INSTDIR\ca-certs\VeriSign_Class_3_Primary_CA-G5-2.pem"
     Delete "$INSTDIR\ca-certs\VeriSign_International_Server_Class_3_CA.pem"
     Delete "$INSTDIR\ca-certs\Verisign_RSA_Secure_Server_CA.pem"
+    Delete "$INSTDIR\ca-certs\mozilla.pem"
     RMDir "$INSTDIR\ca-certs"
     RMDir /r "$INSTDIR\locale"
     RMDir /r "$INSTDIR\pixmaps"
@@ -562,17 +555,12 @@ Section Uninstall
     Delete "$INSTDIR\plugins\libgg.dll"
     Delete "$INSTDIR\plugins\libicq.dll"
     Delete "$INSTDIR\plugins\libirc.dll"
-    Delete "$INSTDIR\plugins\libmsn.dll"
-    Delete "$INSTDIR\plugins\libmxit.dll"
-    Delete "$INSTDIR\plugins\libmyspace.dll"
     Delete "$INSTDIR\plugins\libnapster.dll"
     Delete "$INSTDIR\plugins\libnovell.dll"
     Delete "$INSTDIR\plugins\libsametime.dll"
     Delete "$INSTDIR\plugins\libsilc.dll"
     Delete "$INSTDIR\plugins\libsimple.dll"
     Delete "$INSTDIR\plugins\libtoc.dll"
-    Delete "$INSTDIR\plugins\libyahoo.dll"
-    Delete "$INSTDIR\plugins\libyahoojp.dll"
     Delete "$INSTDIR\plugins\libxmpp.dll"
     Delete "$INSTDIR\plugins\log_reader.dll"
     Delete "$INSTDIR\plugins\markerline.dll"

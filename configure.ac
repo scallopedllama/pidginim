@@ -43,10 +43,10 @@ AC_PREREQ([2.50])
 #
 # Make sure to update finch/libgnt/configure.ac with libgnt version changes.
 #
-m4_define([purple_lt_current], [10])
+m4_define([purple_lt_current], [13])
 m4_define([purple_major_version], [2])
-m4_define([purple_minor_version], [10])
-m4_define([purple_micro_version], [12])
+m4_define([purple_minor_version], [13])
+m4_define([purple_micro_version], [0])
 m4_define([purple_version_suffix], [])
 m4_define([purple_version],
           [purple_major_version.purple_minor_version.purple_micro_version])
@@ -748,7 +748,7 @@ AC_ARG_WITH(gstreamer, [AS_HELP_STRING([--with-gstreamer=<version>],
 		[compile with GStreamer 0.10 or 1.0 interface (default: auto)])],
 	with_gstreamer="$withval", with_gstreamer="auto")
 if test "x$enable_gst" != "xno"; then
-	if test "x$with_gstreamer" == "xauto"; then
+	if test "x$with_gstreamer" = "xauto"; then
 		PKG_CHECK_MODULES(GSTREAMER, [gstreamer-1.0], [
 			AC_DEFINE(USE_GSTREAMER, 1, [Use GStreamer for playing sounds])
 			with_gstreamer="1.0"
@@ -772,7 +772,7 @@ Use --disable-gstreamer if you do not need GStreamer (sound) support.
 				fi
 			])
 		])
-	elif test "x$with_gstreamer" == "x1.0"; then
+	elif test "x$with_gstreamer" = "x1.0"; then
 		PKG_CHECK_MODULES(GSTREAMER, [gstreamer-1.0], [
 			AC_DEFINE(USE_GSTREAMER, 1, [Use GStreamer 1.0 for playing sounds])
 			AC_SUBST(GSTREAMER_CFLAGS)
@@ -787,7 +787,7 @@ Use --disable-gstreamer if you do not need GStreamer (sound) support.
 ])
 			fi
 		])
-	elif test "x$with_gstreamer" == "x0.10"; then
+	elif test "x$with_gstreamer" = "x0.10"; then
 		PKG_CHECK_MODULES(GSTREAMER, [gstreamer-0.10], [
 			AC_DEFINE(USE_GSTREAMER, 1, [Use GStreamer 0.10 for playing sounds])
 			AC_SUBST(GSTREAMER_CFLAGS)
@@ -807,14 +807,14 @@ Use --disable-gstreamer if you do not need GStreamer (sound) support.
 	fi
 fi
 
-if test "x$with_gtk" == "x3" -a "x$with_gstreamer" == "x0.10"; then
+if test "x$with_gtk" = "x3" -a "x$with_gstreamer" = "x0.10"; then
 	AC_MSG_ERROR([WebKitGTK+ 3.0 cannot be mixed with GStreamer 0.10.
 Please switch to WebKitGTK+ 2.0 or GStreamer 1.0.])
-elif test "x$with_gtk" == "x2" -a "x$with_gstreamer" == "x1.0"; then
+elif test "x$with_gtk" = "x2" -a "x$with_gstreamer" = "x1.0"; then
 	AC_MSG_ERROR([WebKitGTK+ 2.0 cannot be mixed with GStreamer 1.0.
 Please switch to WebKitGTK+ 3.0 or GStreamer 0.10.])
 fi
-if test "x$with_gstreamer" == "x0.10" -o "x$with_gstreamer" == "x1.0"; then
+if test "x$with_gstreamer" = "x0.10" -o "x$with_gstreamer" = "x1.0"; then
 	AC_SUBST(GSTREAMER_VER, [$with_gstreamer])
 else
 	AC_SUBST(GSTREAMER_VER, "")
@@ -823,7 +823,7 @@ fi
 dnl #######################################################################
 dnl # Check for GStreamer Video
 dnl #######################################################################
-if test "x$enable_gst" != "xno" -a "x$with_gstreamer" == "x1.0"; then
+if test "x$enable_gst" != "xno" -a "x$with_gstreamer" = "x1.0"; then
 	AC_ARG_ENABLE(gstreamer-video,
 		[AS_HELP_STRING([--disable-gstreamer-video], [compile without GStreamer 1.0 Video Overlay support])],
 			enable_gstvideo="$enableval", enable_gstvideo="yes")
@@ -843,7 +843,7 @@ fi
 dnl #######################################################################
 dnl # Check for GStreamer Interfaces
 dnl #######################################################################
-if test "x$enable_gst" != "xno" -a "x$with_gstreamer" == "x0.10"; then
+if test "x$enable_gst" != "xno" -a "x$with_gstreamer" = "x0.10"; then
 	AC_ARG_ENABLE(gstreamer-interfaces,
 		[AS_HELP_STRING([--disable-gstreamer-interfaces], [compile without GStreamer 0.10 interface support])],
 			enable_gstinterfaces="$enableval", enable_gstinterfaces="yes")
@@ -867,7 +867,7 @@ AC_ARG_ENABLE(farstream,
 	[AS_HELP_STRING([--disable-farstream], [compile without farstream support])],
 	enable_farstream="$enableval", enable_farstream="yes")
 if test "x$enable_farstream" != "xno"; then
-	if test "x$with_gstreamer" == "x1.0"; then
+	if test "x$with_gstreamer" = "x1.0"; then
 		PKG_CHECK_MODULES(FARSTREAM, [farstream-0.2 >= 0.2.7], [
 			AC_SUBST(FARSTREAM_CFLAGS)
 			AC_SUBST(FARSTREAM_LIBS)
@@ -898,9 +898,9 @@ AC_ARG_ENABLE(vv,
 	[AS_HELP_STRING([--disable-vv], [compile without voice and video support])],
 	enable_vv="$enableval", enable_vv="yes")
 if test "x$enable_vv" != "xno"; then
-	if test "x$enable_gst" != "xno" -a "x$with_gstreamer" == "x1.0" -a "x$enable_gstvideo" != "xno" -a "x$enable_farstream" != "xno"; then
+	if test "x$enable_gst" != "xno" -a "x$with_gstreamer" = "x1.0" -a "x$enable_gstvideo" != "xno" -a "x$enable_farstream" != "xno"; then
 		AC_DEFINE(USE_VV, 1, [Use voice and video])
-	elif test "x$enable_gst" != "xno" -a "x$with_gstreamer" == "x0.10" -a "x$enable_gstinterfaces" != "xno" -a "x$enable_farstream" != "xno"; then
+	elif test "x$enable_gst" != "xno" -a "x$with_gstreamer" = "x0.10" -a "x$enable_gstinterfaces" != "xno" -a "x$enable_farstream" != "xno"; then
 		AC_DEFINE(USE_VV, 1, [Use voice and video])
 	else
 		enable_vv="no"
@@ -918,7 +918,7 @@ AM_CONDITIONAL(USE_VV, test "x$enable_vv" != "xno")
 dnl #######################################################################
 dnl # Check for Raw data streams support in Farstream 
 dnl #######################################################################
-if test "x$enable_vv" != "xno" -a "x$with_gstreamer" == "x1.0"; then
+if test "x$enable_vv" != "xno" -a "x$with_gstreamer" = "x1.0"; then
 	AC_MSG_CHECKING(for raw data support in Farstream)
 	PKG_CHECK_MODULES(GSTAPP, [gstreamer-app-1.0], [
 		AC_DEFINE(USE_GSTAPP, 1, [Use GStreamer Video Overlay support])
@@ -1189,7 +1189,7 @@ if test "x$STATIC_PRPLS" != "x" -a "x$DYNAMIC_PRPLS" = "xall"; then
 fi
 
 if test "x$STATIC_PRPLS" = "xall" ; then
-	STATIC_PRPLS="bonjour gg irc jabber msn myspace mxit novell oscar sametime silc simple yahoo zephyr"
+	STATIC_PRPLS="bonjour gg irc jabber novell oscar sametime silc simple zephyr"
 fi
 if test "x$have_meanwhile" != "xyes" ; then
 	STATIC_PRPLS=`echo $STATIC_PRPLS | $sedpath 's/sametime//'`
@@ -1209,19 +1209,13 @@ extern_init=
 load_proto=
 for i in $STATIC_PRPLS ; do
 	dnl Ugly special case for "libsilcpurple.la":
-	dnl ... and Ugly special case for multi-protocol oscar and yahoo
+	dnl ... and Ugly special case for multi-protocol oscar
 	if test \( "x$i" = "xoscar" -o "x$i" = "xaim" -o "x$i" = "xicq" \) -a "x$static_oscar" != "xyes"; then
 		STATIC_LINK_LIBS="$STATIC_LINK_LIBS \$(top_builddir)/libpurple/protocols/oscar/liboscar.la"
 		extern_init="$extern_init extern gboolean purple_init_aim_plugin();"
 		extern_init="$extern_init extern gboolean purple_init_icq_plugin();"
 		load_proto="$load_proto purple_init_aim_plugin();"
 		load_proto="$load_proto purple_init_icq_plugin();"
-	elif test "x$i" = "xyahoo"; then
-		STATIC_LINK_LIBS="$STATIC_LINK_LIBS \$(top_builddir)/libpurple/protocols/yahoo/libymsg.la"
-		extern_init="$extern_init extern gboolean purple_init_yahoo_plugin();"
-		extern_init="$extern_init extern gboolean purple_init_yahoojp_plugin();"
-		load_proto="$load_proto purple_init_yahoo_plugin();"
-		load_proto="$load_proto purple_init_yahoojp_plugin();"
 	else
 		if test "x$i" = "xsilc"; then
 			STATIC_LINK_LIBS="$STATIC_LINK_LIBS \$(top_builddir)/libpurple/protocols/$i/lib${i}purple.la"
@@ -1238,9 +1232,6 @@ for i in $STATIC_PRPLS ; do
 		gg)			static_gg=yes ;;
 		irc)		static_irc=yes ;;
 		jabber)		static_jabber=yes ;;
-		msn)		static_msn=yes ;;
-		myspace)	static_myspace=yes ;;
-		mxit)		static_mxit=yes ;;
 		novell)		static_novell=yes ;;
 		oscar)		static_oscar=yes ;;
 		aim)		static_oscar=yes ;;
@@ -1249,7 +1240,6 @@ for i in $STATIC_PRPLS ; do
 		silc)		static_silc=yes ;;
 		silc10)		static_silc=yes ;;
 		simple)		static_simple=yes ;;
-		yahoo)		static_yahoo=yes ;;
 		zephyr)		static_zephyr=yes ;;
 		*)			echo "Invalid static protocol $i!!" ; exit 1 ;;
 	esac
@@ -1258,15 +1248,11 @@ AM_CONDITIONAL(STATIC_BONJOUR, test "x$static_bonjour" = "xyes")
 AM_CONDITIONAL(STATIC_GG, test "x$static_gg" = "xyes")
 AM_CONDITIONAL(STATIC_IRC, test "x$static_irc" = "xyes")
 AM_CONDITIONAL(STATIC_JABBER, test "x$static_jabber" = "xyes")
-AM_CONDITIONAL(STATIC_MSN, test "x$static_msn" = "xyes")
-AM_CONDITIONAL(STATIC_MYSPACE, test "x$static_myspace" = "xyes")
-AM_CONDITIONAL(STATIC_MXIT, test "x$static_mxit" = "xyes")
 AM_CONDITIONAL(STATIC_NOVELL, test "x$static_novell" = "xyes")
 AM_CONDITIONAL(STATIC_OSCAR, test "x$static_oscar" = "xyes")
 AM_CONDITIONAL(STATIC_SAMETIME, test "x$static_sametime" = "xyes" -a "x$have_meanwhile" = "xyes")
 AM_CONDITIONAL(STATIC_SILC, test "x$static_silc" = "xyes" -a "x$have_silc" = "xyes")
 AM_CONDITIONAL(STATIC_SIMPLE, test "x$static_simple" = "xyes")
-AM_CONDITIONAL(STATIC_YAHOO, test "x$static_yahoo" = "xyes")
 AM_CONDITIONAL(STATIC_ZEPHYR, test "x$static_zephyr" = "xyes")
 AC_SUBST(STATIC_LINK_LIBS)
 AC_DEFINE_UNQUOTED(STATIC_PROTO_INIT, $extern_init static void static_proto_init(void) { $load_proto },
@@ -1274,7 +1260,7 @@ AC_DEFINE_UNQUOTED(STATIC_PROTO_INIT, $extern_init static void static_proto_init
 
 AC_ARG_WITH(dynamic_prpls, [AC_HELP_STRING([--with-dynamic-prpls], [specify which protocols to build dynamically])], [DYNAMIC_PRPLS=`echo $withval | $sedpath 's/,/ /g'`])
 if test "x$DYNAMIC_PRPLS" = "xall" ; then
-	DYNAMIC_PRPLS="bonjour gg irc jabber msn myspace mxit novell oscar sametime silc simple yahoo zephyr"
+	DYNAMIC_PRPLS="bonjour gg irc jabber novell oscar sametime silc simple zephyr"
 fi
 if test "x$have_meanwhile" != "xyes"; then
 	DYNAMIC_PRPLS=`echo $DYNAMIC_PRPLS | $sedpath 's/sametime//'`
@@ -1295,9 +1281,6 @@ for i in $DYNAMIC_PRPLS ; do
 		gg)			dynamic_gg=yes ;;
 		irc)		dynamic_irc=yes ;;
 		jabber)		dynamic_jabber=yes ;;
-		msn)		dynamic_msn=yes ;;
-		myspace)	dynamic_myspace=yes ;;
-		mxit)		dynamic_mxit=yes ;;
 		novell)		dynamic_novell=yes ;;
 		null)		dynamic_null=yes ;;
 		oscar)		dynamic_oscar=yes ;;
@@ -1307,7 +1290,6 @@ for i in $DYNAMIC_PRPLS ; do
 		silc)		dynamic_silc=yes ;;
 		silc10)		dynamic_silc=yes ;;
 		simple)		dynamic_simple=yes ;;
-		yahoo)		dynamic_yahoo=yes ;;
 		zephyr)		dynamic_zephyr=yes ;;
 		*)			echo "Invalid dynamic protocol $i!!" ; exit 1 ;;
 	esac
@@ -1794,7 +1776,7 @@ AC_ARG_ENABLE(nss,
 	[enable_nss="$enableval"],
 	[enable_nss="yes"])
 
-msg_ssl="None. MSN, Yahoo!, Novell Groupwise and Google Talk will not work without GnuTLS or NSS. OpenSSL is NOT usable!"
+msg_ssl="None. Novell Groupwise and Google Talk will not work without GnuTLS or NSS. OpenSSL is NOT usable!"
 looked_for_gnutls="no"
 dnl #
 dnl # Check for GnuTLS if it's specified.
@@ -2205,19 +2187,19 @@ elif test "x$looked_for_gnutls" = "xyes" -a "x$looked_for_nss" = "xyes" -a "x$fo
 	AC_MSG_ERROR([
 Neither GnuTLS or NSS SSL development headers found.
 Use --disable-nss --disable-gnutls if you do not need SSL support.
-MSN, Yahoo!, Novell Groupwise and Google Talk will not work without GnuTLS or NSS. OpenSSL is NOT usable!
+Novell Groupwise and Google Talk will not work without GnuTLS or NSS. OpenSSL is NOT usable!
 ])
 elif test "x$looked_for_gnutls" = "xyes" -a "x$force_deps" = "xyes" ; then
 	AC_MSG_ERROR([
 GnuTLS SSL development headers not found.
 Use --disable-gnutls if you do not need SSL support.
-MSN, Yahoo!, Novell Groupwise and Google Talk will not work without SSL support.
+Novell Groupwise and Google Talk will not work without SSL support.
 ])
 elif test "x$looked_for_nss" = "xyes" -a "x$force_deps" = "xyes" ; then
 	AC_MSG_ERROR([
 NSS SSL development headers not found.
 Use --disable-nss if you do not need SSL support.
-MSN, Yahoo!, Novell Groupwise and Google Talk will not work without SSL support.
+Novell Groupwise and Google Talk will not work without SSL support.
 ])
 fi
 
@@ -2238,6 +2220,8 @@ if test "$enable_tcl" = yes; then
 	TCLCONFIG=no
 	TCLCONFIGDIRS="/usr/lib \
 			/usr/lib64 \
+			/usr/lib/tcl8.7 \
+			/usr/lib/tcl8.6 \
 			/usr/lib/tcl8.5 \
 			/usr/lib/tcl8.4 \
 			/usr/lib/tcl8.3 \
@@ -2313,6 +2297,8 @@ if test "$enable_tcl" = yes -a "$enable_tk" = yes; then
 	TKCONFIG=no
 	TKCONFIGDIRS="/usr/lib \
 			/usr/lib64 \
+			/usr/lib/tk8.7 \
+			/usr/lib/tk8.6 \
 			/usr/lib/tk8.5 \
 			/usr/lib/tk8.4 \
 			/usr/lib/tk8.3 \
@@ -2662,9 +2648,6 @@ AC_CONFIG_FILES([Makefile
 		   libpurple/protocols/gg/Makefile
 		   libpurple/protocols/irc/Makefile
 		   libpurple/protocols/jabber/Makefile
-		   libpurple/protocols/msn/Makefile
-		   libpurple/protocols/myspace/Makefile
-		   libpurple/protocols/mxit/Makefile
 		   libpurple/protocols/novell/Makefile
 		   libpurple/protocols/null/Makefile
 		   libpurple/protocols/oscar/Makefile
@@ -2672,7 +2655,6 @@ AC_CONFIG_FILES([Makefile
 		   libpurple/protocols/silc/Makefile
 		   libpurple/protocols/silc10/Makefile
 		   libpurple/protocols/simple/Makefile
-		   libpurple/protocols/yahoo/Makefile
 		   libpurple/protocols/zephyr/Makefile
 		   libpurple/tests/Makefile
 		   libpurple/purple.h

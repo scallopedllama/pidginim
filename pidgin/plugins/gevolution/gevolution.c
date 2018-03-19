@@ -90,7 +90,7 @@ update_ims_from_contact(EContact *contact, const char *name,
 		PurpleAccount *account = purple_connection_get_account(gc);
 		char *me;
 
-		if (strcmp(purple_account_get_protocol_id(account), prpl_id))
+		if (!purple_strequal(purple_account_get_protocol_id(account), prpl_id))
 			continue;
 
 		if (!purple_account_get_bool(account, "gevo-autoadd", FALSE))
@@ -100,7 +100,7 @@ update_ims_from_contact(EContact *contact, const char *name,
 		for (l2 = ims; l2 != NULL; l2 = l2->next)
 		{
 			if (purple_find_buddy(account, l2->data) != NULL ||
-				!strcmp(me, purple_normalize(account, l2->data)))
+				purple_strequal(me, purple_normalize(account, l2->data)))
 				continue;
 
 			gevo_add_buddy(account, _("Buddies"), l2->data, name);
@@ -121,8 +121,6 @@ update_buddies_from_contact(EContact *contact)
 
 	update_ims_from_contact(contact, name, "prpl-aim",    E_CONTACT_IM_AIM);
 	update_ims_from_contact(contact, name, "prpl-jabber", E_CONTACT_IM_JABBER);
-	update_ims_from_contact(contact, name, "prpl-yahoo",  E_CONTACT_IM_YAHOO);
-	update_ims_from_contact(contact, name, "prpl-msn",    E_CONTACT_IM_MSN);
 	update_ims_from_contact(contact, name, "prpl-icq",    E_CONTACT_IM_ICQ);
 	update_ims_from_contact(contact, name, "prpl-novell", E_CONTACT_IM_GROUPWISE);
 	update_ims_from_contact(contact, name, "prpl-gg",     E_CONTACT_IM_GADUGADU);

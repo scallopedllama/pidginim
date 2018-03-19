@@ -38,11 +38,29 @@
 #define ICQ_DEFAULT_LOGIN_SERVER "login.icq.com"
 #define ICQ_DEFAULT_SSL_LOGIN_SERVER "slogin.icq.com"
 
+#define AIM_DEFAULT_KDC_SERVER "kdc.uas.aol.com"
+#define AIM_DEFAULT_KDC_PORT 443
+
+/*
+ * Using clientLogin requires a developer ID.  This key is for libpurple.
+ * It is the default key for all libpurple-based clients.  AOL encourages
+ * UIs (especially ones with lots of users) to override this with their
+ * own key.
+ */
+#define ICQ_DEFAULT_DIST_ID 1553
+#define ICQ_DEFAULT_CLIENT_KEY "ma15d7JTxbmVG-RP"
+#define AIM_DEFAULT_DIST_ID 1717
+#define AIM_DEFAULT_CLIENT_KEY "ma19CwYN9i9Mw5nY"
+
 #define OSCAR_DEFAULT_LOGIN_PORT 5190
 
 #define OSCAR_OPPORTUNISTIC_ENCRYPTION "opportunistic_encryption"
 #define OSCAR_REQUIRE_ENCRYPTION "require_encryption"
 #define OSCAR_NO_ENCRYPTION "no_encryption"
+
+#define OSCAR_MD5_LOGIN "md5_login"
+#define OSCAR_CLIENT_LOGIN "client_login"
+#define OSCAR_KERBEROS_LOGIN "kerberos_login"
 
 #ifndef _WIN32
 #define OSCAR_DEFAULT_CUSTOM_ENCODING "ISO-8859-1"
@@ -54,7 +72,7 @@
 #define OSCAR_DEFAULT_WEB_AWARE FALSE
 #define OSCAR_DEFAULT_ALWAYS_USE_RV_PROXY FALSE
 #define OSCAR_DEFAULT_ALLOW_MULTIPLE_LOGINS TRUE
-#define OSCAR_DEFAULT_USE_CLIENTLOGIN TRUE
+#define OSCAR_DEFAULT_LOGIN OSCAR_CLIENT_LOGIN
 #define OSCAR_DEFAULT_ENCRYPTION OSCAR_OPPORTUNISTIC_ENCRYPTION
 
 #ifdef _WIN32

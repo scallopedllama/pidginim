@@ -73,38 +73,30 @@ static const gchar *get_start_oscar_session_url(OscarData *od)
 	return start_oscar_session_urls[od->icq ? 1 : 0];
 }
 
-/*
- * Using clientLogin requires a developer ID.  This key is for libpurple.
- * It is the default key for all libpurple-based clients.  AOL encourages
- * UIs (especially ones with lots of users) to override this with their
- * own key.  This key is owned by the AIM account "markdoliner"
- *
- * Keys can be managed at http://developer.aim.com/manageKeys.jsp
- */
-#define DEFAULT_CLIENT_KEY "ma15d7JTxbmVG-RP"
-
 static const char *get_client_key(OscarData *od)
 {
 	return oscar_get_ui_info_string(
 			od->icq ? "prpl-icq-clientkey" : "prpl-aim-clientkey",
-			DEFAULT_CLIENT_KEY);
+			od->icq ? ICQ_DEFAULT_CLIENT_KEY : AIM_DEFAULT_CLIENT_KEY);
 }
 
 static gchar *generate_error_message(xmlnode *resp, const char *url)
 {
 	xmlnode *text;
 	xmlnode *status_code_node;
-	gchar *status_code;
 	gboolean have_error_code = TRUE;
 	gchar *err = NULL;
 	gchar *details = NULL;
 
 	status_code_node = xmlnode_get_child(resp, "statusCode");
 	if (status_code_node) {
+		gchar *status_code;
+
 		/* We can get 200 OK here if the server omitted something we think it shouldn't have (see #12783).
 		 * No point in showing the "Ok" string to the user.
 		 */
-		if ((status_code = xmlnode_get_data_unescaped(status_code_node)) && strcmp(status_code, "200") == 0) {
+		status_code = xmlnode_get_data_unescaped(status_code_node);
+		if (purple_strequal(status_code, "200")) {
 			have_error_code = FALSE;
 		}
 	}
@@ -268,12 +260,12 @@ static gboolean parse_start_oscar_session_response(PurpleConnection *gc, const g
 		return FALSE;
 	}
 
-	if (strcmp(encryption_type, OSCAR_NO_ENCRYPTION) != 0) {
+	if (!purple_strequal(encryption_type, OSCAR_NO_ENCRYPTION)) {
 		tls_node = xmlnode_get_child(data_node, "tlsCertName");
 		if (tls_node != NULL) {
 			*tls_certname = xmlnode_get_data_unescaped(tls_node);
 		} else {
-			if (strcmp(encryption_type, OSCAR_OPPORTUNISTIC_ENCRYPTION) == 0) {
+			if (purple_strequal(encryption_type, OSCAR_OPPORTUNISTIC_ENCRYPTION)) {
 				purple_debug_warning("oscar", "We haven't received a tlsCertName to use. We will not do SSL to BOS.\n");
 			} else {
 				purple_debug_error("oscar", "startOSCARSession was missing tlsCertName: %s\n", response);
@@ -362,8 +354,7 @@ static void send_start_oscar_session(OscarData *od, const char *token, const cha
 	const gchar *encryption_type = purple_account_get_string(account, "encryption", OSCAR_DEFAULT_ENCRYPTION);
 
 	/*
-	 * Construct the GET parameters.  0x00000611 is the distid given to
-	 * us by AOL for use as the default libpurple distid.
+	 * Construct the GET parameters.
 	 */
 	query_string = g_strdup_printf("a=%s"
 			"&distId=%d"
@@ -372,10 +363,11 @@ static void send_start_oscar_session(OscarData *od, const char *token, const cha
 			"&ts=%" PURPLE_TIME_T_MODIFIER
 			"&useTLS=%d",
 			purple_url_encode(token),
-			oscar_get_ui_info_int(od->icq ? "prpl-icq-distid" : "prpl-aim-distid", 0x00000611),
+			oscar_get_ui_info_int(od->icq ? "prpl-icq-distid" : "prpl-aim-distid",
+				od->icq ? ICQ_DEFAULT_DIST_ID : AIM_DEFAULT_DIST_ID),
 			get_client_key(od),
 			hosttime,
-			strcmp(encryption_type, OSCAR_NO_ENCRYPTION) != 0 ? 1 : 0);
+			!purple_strequal(encryption_type, OSCAR_NO_ENCRYPTION));
 	signature = generate_signature("GET", get_start_oscar_session_url(od),
 			query_string, session_key);
 	url = g_strdup_printf("%s?%s&sig_sha256=%s", get_start_oscar_session_url(od),
@@ -463,7 +455,7 @@ static gboolean parse_client_login_response(PurpleConnection *gc, const gchar *r
 	}
 
 	/* Make sure the status code was 200 */
-	if (strcmp(tmp, "200") != 0)
+	if (!purple_strequal(tmp, "200"))
 	{
 		int status_code, status_detail_code = 0;
 

@@ -139,60 +139,10 @@ static gchar *get_error_text(void)
 	return ret;
 }
 
-static const PRUint16 default_ciphers[] = {
-#if NSS_VMAJOR > 3 || ( NSS_VMAJOR == 3 && NSS_VMINOR > 15 ) \
-		|| ( NSS_VMAJOR == 3 && NSS_VMINOR == 15 && NSS_VPATCH >= 1 )
-	TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
-	TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,
-	TLS_DHE_RSA_WITH_AES_256_CBC_SHA256,
-# if NSS_VMAJOR > 3 || ( NSS_VMAJOR == 3 && NSS_VMINOR > 15 ) \
-		|| ( NSS_VMAJOR == 3 && NSS_VMINOR == 15 && NSS_VPATCH >= 2 )
-	TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-	TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,
-	TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-# endif
-#endif
-	TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-	TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-
-	TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-	TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-
-	TLS_DHE_RSA_WITH_AES_128_CBC_SHA,
-
-	TLS_DHE_RSA_WITH_AES_256_CBC_SHA,
-
-	TLS_DHE_DSS_WITH_AES_128_CBC_SHA, /* deprecated (DSS) */
-	/* TLS_DHE_DSS_WITH_AES_256_CBC_SHA, false }, // deprecated (DSS) */
-
-	TLS_ECDHE_RSA_WITH_RC4_128_SHA,		/* deprecated (RC4) */
-	TLS_ECDHE_ECDSA_WITH_RC4_128_SHA, 	/* deprecated (RC4) */
-
-	/* RFC 6120 Mandatory */
-	TLS_RSA_WITH_AES_128_CBC_SHA,		/* deprecated (RSA key exchange) */
-	TLS_RSA_WITH_AES_256_CBC_SHA,		/* deprecated (RSA key exchange) */
-	/* TLS_RSA_WITH_3DES_EDE_CBC_SHA, 	 deprecated (RSA key exchange, 3DES) */
-
-	0 /* end marker */
-};
-
-/* It's unfortunate we need to manage these manually,
- * ideally NSS would choose good defaults.
- * This is mostly based on FireFox's list:
- * https://hg.mozilla.org/mozilla-central/log/default/security/manager/ssl/src/nsNSSComponent.cpp */
 static void ssl_nss_init_ciphers(void) {
-	/* Disable any ciphers that NSS might have enabled by default */
 	const PRUint16 *cipher;
-	for (cipher = SSL_GetImplementedCiphers(); *cipher != 0; ++cipher) {
-		SSL_CipherPrefSetDefault(*cipher, PR_FALSE);
-	}
 
-	/* Now only set SSL/TLS ciphers we knew about at compile time */
-	for (cipher = default_ciphers; *cipher != 0; ++cipher) {
-		SSL_CipherPrefSetDefault(*cipher, PR_TRUE);
-	}
-
-	/* Now log the available and enabled Ciphers */
+	/* Log the available and enabled Ciphers */
 	for (cipher = SSL_GetImplementedCiphers(); *cipher != 0; ++cipher) {
 		const PRUint16 suite = *cipher;
 		SECStatus rv;
@@ -246,20 +196,6 @@ ssl_nss_init_nss(void)
 				"0x%04hx through 0x%04hx\n", supported.min, supported.max);
 		purple_debug_info("nss", "TLS versions allowed by default: "
 				"0x%04hx through 0x%04hx\n", enabled.min, enabled.max);
-
-		/* Make sure all versions of TLS supported by the local library are
-		   enabled. (For some reason NSS doesn't enable newer versions of TLS
-		   by default -- more context in ticket #15909.) */
-		if (supported.max > enabled.max) {
-			enabled.max = supported.max;
-			if (SSL_VersionRangeSetDefault(ssl_variant_stream, &enabled) == SECSuccess) {
-				purple_debug_info("nss", "Changed allowed TLS versions to "
-						"0x%04hx through 0x%04hx\n", enabled.min, enabled.max);
-			} else {
-				purple_debug_error("nss", "Error setting allowed TLS versions to "
-						"0x%04hx through 0x%04hx\n", enabled.min, enabled.max);
-			}
-		}
 	}
 #endif /* NSS >= 3.14 */
 
@@ -881,11 +817,11 @@ x509_signed_by(PurpleCertificate * crt,
 }
 
 static GByteArray *
-x509_sha1sum(PurpleCertificate *crt)
+x509_shasum(PurpleCertificate *crt, SECOidTag algo)
 {
 	CERTCertificate *crt_dat;
-	size_t hashlen = 20; /* Size of an sha1sum */
-	GByteArray *sha1sum;
+	size_t hashlen = (algo == SEC_OID_SHA1) ? 20 : 32;
+	GByteArray *hash;
 	SECItem *derCert; /* DER representation of the cert */
 	SECStatus st;
 
@@ -899,22 +835,34 @@ x509_sha1sum(PurpleCertificate *crt)
 	derCert = &(crt_dat->derCert);
 
 	/* Make a hash! */
-	sha1sum = g_byte_array_sized_new(hashlen);
+	hash = g_byte_array_sized_new(hashlen);
 	/* glib leaves the size as 0 by default */
-	sha1sum->len = hashlen;
+	hash->len = hashlen;
 
-	st = PK11_HashBuf(SEC_OID_SHA1, sha1sum->data,
+	st = PK11_HashBuf(algo, hash->data,
 			  derCert->data, derCert->len);
 
 	/* Check for errors */
 	if (st != SECSuccess) {
-		g_byte_array_free(sha1sum, TRUE);
+		g_byte_array_free(hash, TRUE);
 		purple_debug_error("nss/x509",
 				   "Error: hashing failed!\n");
 		return NULL;
 	}
 
-	return sha1sum;
+	return hash;
+}
+
+static GByteArray *
+x509_sha1sum(PurpleCertificate *crt)
+{
+	return x509_shasum(crt, SEC_OID_SHA1);
+}
+
+static GByteArray *
+x509_sha256sum(PurpleCertificate *crt)
+{
+	return x509_shasum(crt, SEC_OID_SHA256);
 }
 
 static gchar *
@@ -1010,6 +958,7 @@ x509_times (PurpleCertificate *crt, time_t *activation, time_t *expiration)
 {
 	CERTCertificate *crt_dat;
 	PRTime nss_activ, nss_expir;
+	SECStatus cert_times_success;
 
 	g_return_val_if_fail(crt, FALSE);
 	g_return_val_if_fail(crt->scheme == &x509_nss, FALSE);
@@ -1019,10 +968,9 @@ x509_times (PurpleCertificate *crt, time_t *activation, time_t *expiration)
 
 	/* Extract the times into ugly PRTime thingies */
 	/* TODO: Maybe this shouldn't throw an error? */
-	g_return_val_if_fail(
-		SECSuccess == CERT_GetCertTimes(crt_dat,
-						&nss_activ, &nss_expir),
-		FALSE);
+	cert_times_success = CERT_GetCertTimes(crt_dat,
+						&nss_activ, &nss_expir);
+	g_return_val_if_fail(cert_times_success == SECSuccess, FALSE);
 
 	/* NSS's native PRTime type *almost* corresponds to time_t; however,
 	   it measures *microseconds* since the epoch, not seconds. Hence
@@ -1211,7 +1159,9 @@ static PurpleCertificateScheme x509_nss = {
 	x509_importcerts_from_file,      /* Multiple certificate import function */
 	x509_register_trusted_tls_cert,  /* Register a certificate as trusted for TLS */
 	x509_verify_cert,                /* Verify that the specified cert chain is trusted */
-	NULL
+	sizeof(PurpleCertificateScheme), /* struct_size */
+	x509_sha256sum,                  /* SHA256 fingerprint */
+	NULL,
 };
 
 static PurpleSslOps ssl_ops =

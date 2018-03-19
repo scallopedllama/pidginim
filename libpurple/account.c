@@ -84,6 +84,7 @@ typedef struct
 } PurpleAccountRequestInfo;
 
 static PurpleAccountUiOps *account_ui_ops = NULL;
+static PurpleAccountPrefsUiOps *account_prefs_ui_ops = NULL;
 
 static GList   *accounts = NULL;
 static guint    save_timer = 0;
@@ -480,6 +481,7 @@ accounts_to_xmlnode(void)
 static void
 sync_accounts(void)
 {
+	PurpleAccountPrefsUiOps *ui_ops;
 	xmlnode *node;
 	char *data;
 
@@ -487,6 +489,13 @@ sync_accounts(void)
 	{
 		purple_debug_error("account", "Attempted to save accounts before "
 						 "they were read!\n");
+		return;
+	}
+
+	ui_ops = purple_account_prefs_get_ui_ops();
+
+	if (ui_ops != NULL && ui_ops->save != NULL) {
+		ui_ops->save();
 		return;
 	}
 
@@ -508,6 +517,15 @@ save_cb(gpointer data)
 static void
 schedule_accounts_save(void)
 {
+	PurpleAccountPrefsUiOps *ui_ops;
+
+	ui_ops = purple_account_prefs_get_ui_ops();
+
+	if (ui_ops != NULL && ui_ops->schedule_save != NULL) {
+		ui_ops->schedule_save();
+		return;
+	}
+
 	if (save_timer == 0)
 		save_timer = purple_timeout_add_seconds(5, save_cb, NULL);
 }
@@ -516,35 +534,6 @@ schedule_accounts_save(void)
 /*********************************************************************
  * Reading from disk                                                 *
  *********************************************************************/
-static void
-migrate_yahoo_japan(PurpleAccount *account)
-{
-	/* detect a Yahoo! JAPAN account that existed prior to 2.6.0 and convert it
-	 * to use the new prpl-yahoojp.  Also remove the account-specific settings
-	 * we no longer need */
-
-	if(purple_strequal(purple_account_get_protocol_id(account), "prpl-yahoo")) {
-		if(purple_account_get_bool(account, "yahoojp", FALSE)) {
-			const char *serverjp = purple_account_get_string(account, "serverjp", NULL);
-			const char *xferjp_host = purple_account_get_string(account, "xferjp_host", NULL);
-
-			g_return_if_fail(serverjp != NULL);
-			g_return_if_fail(xferjp_host != NULL);
-
-			purple_account_set_string(account, "server", serverjp);
-			purple_account_set_string(account, "xfer_host", xferjp_host);
-
-			purple_account_set_protocol_id(account, "prpl-yahoojp");
-		}
-
-		/* these should always be nuked */
-		purple_account_remove_setting(account, "yahoojp");
-		purple_account_remove_setting(account, "serverjp");
-		purple_account_remove_setting(account, "xferjp_host");
-
-	}
-}
-
 static void
 migrate_icq_server(PurpleAccount *account)
 {
@@ -570,10 +559,10 @@ static void
 migrate_xmpp_encryption(PurpleAccount *account)
 {
 	/* When this is removed, nuke the "old_ssl" and "require_tls" settings */
-	if (g_str_equal(purple_account_get_protocol_id(account), "prpl-jabber")) {
+	if (purple_strequal(purple_account_get_protocol_id(account), "prpl-jabber")) {
 		const char *sec = purple_account_get_string(account, "connection_security", "");
 
-		if (g_str_equal("", sec)) {
+		if (purple_strequal("", sec)) {
 			const char *val = "require_tls";
 			if (purple_account_get_bool(account, "old_ssl", FALSE))
 				val = "old_ssl";
@@ -649,9 +638,6 @@ parse_settings(xmlnode *node, PurpleAccount *account)
 		g_free(data);
 	}
 
-	/* we do this here because we need access to account settings to determine
-	 * if we can/should migrate an old Yahoo! JAPAN account */
-	migrate_yahoo_japan(account);
 	/* we do this here because we need access to account settings to determine
 	 * if we can/should migrate an ICQ account's server setting */
 	migrate_icq_server(account);
@@ -923,9 +909,9 @@ parse_account(xmlnode *node)
 
 		if (keyring_id == NULL || keyring_id[0] == '\0')
 			is_plaintext = TRUE;
-		else if (g_strcmp0(keyring_id, "keyring-internal") != 0)
+		else if (!purple_strequal(keyring_id, "keyring-internal"))
 			is_plaintext = FALSE;
-		else if (mode == NULL || mode[0] == '\0' || g_strcmp0(mode, "cleartext") == 0)
+		else if (mode == NULL || mode[0] == '\0' || purple_strequal(mode, "cleartext"))
 			is_plaintext = TRUE;
 		else
 			is_plaintext = FALSE;
@@ -1019,9 +1005,18 @@ parse_account(xmlnode *node)
 static void
 load_accounts(void)
 {
+	PurpleAccountPrefsUiOps *ui_ops;
 	xmlnode *node, *child;
 
 	accounts_loaded = TRUE;
+
+	ui_ops = purple_account_prefs_get_ui_ops();
+
+	if (ui_ops != NULL && ui_ops->load != NULL) {
+		ui_ops->load();
+		_purple_buddy_icons_account_loaded_cb();
+		return;
+	}
 
 	node = purple_util_read_xml_from_file("accounts.xml", _("accounts"));
 
@@ -2036,6 +2031,7 @@ void
 purple_account_set_int(PurpleAccount *account, const char *name, int value)
 {
 	PurpleAccountSetting *setting;
+	PurpleAccountPrefsUiOps *ui_ops;
 
 	g_return_if_fail(account != NULL);
 	g_return_if_fail(name    != NULL);
@@ -2047,6 +2043,12 @@ purple_account_set_int(PurpleAccount *account, const char *name, int value)
 
 	g_hash_table_insert(account->settings, g_strdup(name), setting);
 
+	ui_ops = purple_account_prefs_get_ui_ops();
+
+	if (ui_ops != NULL && ui_ops->set_int != NULL) {
+		ui_ops->set_int(account, name, value);
+	}
+
 	schedule_accounts_save();
 }
 
@@ -2055,6 +2057,7 @@ purple_account_set_string(PurpleAccount *account, const char *name,
 						const char *value)
 {
 	PurpleAccountSetting *setting;
+	PurpleAccountPrefsUiOps *ui_ops;
 
 	g_return_if_fail(account != NULL);
 	g_return_if_fail(name    != NULL);
@@ -2066,6 +2069,12 @@ purple_account_set_string(PurpleAccount *account, const char *name,
 
 	g_hash_table_insert(account->settings, g_strdup(name), setting);
 
+	ui_ops = purple_account_prefs_get_ui_ops();
+
+	if (ui_ops != NULL && ui_ops->set_string != NULL) {
+		ui_ops->set_string(account, name, value);
+	}
+
 	schedule_accounts_save();
 }
 
@@ -2073,6 +2082,7 @@ void
 purple_account_set_bool(PurpleAccount *account, const char *name, gboolean value)
 {
 	PurpleAccountSetting *setting;
+	PurpleAccountPrefsUiOps *ui_ops;
 
 	g_return_if_fail(account != NULL);
 	g_return_if_fail(name    != NULL);
@@ -2083,6 +2093,12 @@ purple_account_set_bool(PurpleAccount *account, const char *name, gboolean value
 	setting->value.boolean = value;
 
 	g_hash_table_insert(account->settings, g_strdup(name), setting);
+
+	ui_ops = purple_account_prefs_get_ui_ops();
+
+	if (ui_ops != NULL && ui_ops->set_bool != NULL) {
+		ui_ops->set_bool(account, name, value);
+	}
 
 	schedule_accounts_save();
 }
@@ -3150,6 +3166,18 @@ purple_accounts_get_ui_ops(void)
 	return account_ui_ops;
 }
 
+void
+purple_account_prefs_set_ui_ops(PurpleAccountPrefsUiOps *ops)
+{
+	account_prefs_ui_ops = ops;
+}
+
+PurpleAccountPrefsUiOps *
+purple_account_prefs_get_ui_ops(void)
+{
+	return account_prefs_ui_ops;
+}
+
 void *
 purple_accounts_get_handle(void)
 {
@@ -3206,6 +3234,15 @@ purple_accounts_init(void)
 	purple_signal_register(handle, "account-removed",
 						 purple_marshal_VOID__POINTER, NULL, 1,
 						 purple_value_new(PURPLE_TYPE_SUBTYPE, PURPLE_SUBTYPE_ACCOUNT));
+
+	purple_signal_register(handle, "account-status-changing",
+						 purple_marshal_VOID__POINTER_POINTER_POINTER, NULL, 3,
+						 purple_value_new(PURPLE_TYPE_SUBTYPE,
+										PURPLE_SUBTYPE_ACCOUNT),
+						 purple_value_new(PURPLE_TYPE_SUBTYPE,
+										PURPLE_SUBTYPE_STATUS),
+						 purple_value_new(PURPLE_TYPE_SUBTYPE,
+										PURPLE_SUBTYPE_STATUS));
 
 	purple_signal_register(handle, "account-status-changed",
 						 purple_marshal_VOID__POINTER_POINTER_POINTER, NULL, 3,

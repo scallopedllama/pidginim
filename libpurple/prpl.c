@@ -382,6 +382,9 @@ purple_prpl_change_account_status(PurpleAccount *account,
 	g_return_if_fail(new_status != NULL);
 	g_return_if_fail(!purple_status_is_exclusive(new_status) || old_status != NULL);
 
+	purple_signal_emit(purple_accounts_get_handle(), "account-status-changing",
+					account, old_status, new_status);
+
 	do_prpl_change_account_status(account, old_status, new_status);
 
 	purple_signal_emit(purple_accounts_get_handle(), "account-status-changed",
@@ -630,9 +633,8 @@ purple_find_prpl(const char *id)
 	 * prpl-xmpp isn't used yet (it's prpl-jabber),
 	 * but may be used in the future.
 	 */
-	if (g_strcmp0(id, "prpl-xmpp") == 0 ||
-		g_strcmp0(id, "prpl-gtalk") == 0 ||
-		g_strcmp0(id, "prpl-facebook-xmpp") == 0)
+	if (purple_strequal(id, "prpl-xmpp") ||
+		purple_strequal(id, "prpl-gtalk"))
 	{
 		id = "prpl-jabber";
 	}

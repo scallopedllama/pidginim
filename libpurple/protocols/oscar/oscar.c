@@ -350,7 +350,9 @@ connection_common_established_cb(FlapConnection *conn)
 		flap_connection_send_version(od, conn);
 	else
 	{
-		if (purple_account_get_bool(account, "use_clientlogin", OSCAR_DEFAULT_USE_CLIENTLOGIN))
+		const gchar *login_type = purple_account_get_string(account, "login_type", OSCAR_DEFAULT_LOGIN);
+
+		if (!purple_strequal(login_type, OSCAR_MD5_LOGIN))
 		{
 			ClientInfo aiminfo = CLIENTINFO_PURPLE_AIM;
 			ClientInfo icqinfo = CLIENTINFO_PURPLE_ICQ;
@@ -578,7 +580,7 @@ idle_reporting_pref_cb(const char *name, PurplePrefType type,
 
 	gc = data;
 	od = purple_connection_get_protocol_data(gc);
-	report_idle = strcmp((const char *)value, "none") != 0;
+	report_idle = !purple_strequal((const char *)value, "none");
 	presence = aim_ssi_getpresence(od->ssi.local);
 
 	if (report_idle)
@@ -652,6 +654,7 @@ oscar_login(PurpleAccount *account)
 	PurpleConnection *gc;
 	OscarData *od;
 	const gchar *encryption_type;
+	const gchar *login_type;
 	GList *handlers;
 	GList *sorted_handlers;
 	GList *cur;
@@ -742,7 +745,7 @@ oscar_login(PurpleAccount *account)
 	}
 
 	gc->flags |= PURPLE_CONNECTION_HTML;
-	if (g_str_equal(purple_account_get_protocol_id(account), "prpl-icq")) {
+	if (purple_strequal(purple_account_get_protocol_id(account), "prpl-icq")) {
 		od->icq = TRUE;
 	} else {
 		gc->flags |= PURPLE_CONNECTION_AUTO_RESP;
@@ -750,20 +753,21 @@ oscar_login(PurpleAccount *account)
 
 	/* Set this flag based on the protocol_id rather than the username,
 	   because that is what's tied to the get_moods prpl callback. */
-	if (g_str_equal(purple_account_get_protocol_id(account), "prpl-icq"))
+	if (purple_strequal(purple_account_get_protocol_id(account), "prpl-icq"))
 		gc->flags |= PURPLE_CONNECTION_SUPPORT_MOODS;
 
 	od->default_port = purple_account_get_int(account, "port", OSCAR_DEFAULT_LOGIN_PORT);
 
+	login_type = purple_account_get_string(account, "login_type", OSCAR_DEFAULT_LOGIN);
 	encryption_type = purple_account_get_string(account, "encryption", OSCAR_DEFAULT_ENCRYPTION);
-	if (!purple_ssl_is_supported() && strcmp(encryption_type, OSCAR_REQUIRE_ENCRYPTION) == 0) {
+	if (!purple_ssl_is_supported() && purple_strequal(encryption_type, OSCAR_REQUIRE_ENCRYPTION)) {
 		purple_connection_error_reason(
 			gc,
 			PURPLE_CONNECTION_ERROR_NO_SSL_SUPPORT,
 			_("You required encryption in your account settings, but encryption is not supported by your system."));
 		return;
 	}
-	od->use_ssl = purple_ssl_is_supported() && strcmp(encryption_type, OSCAR_NO_ENCRYPTION) != 0;
+	od->use_ssl = purple_ssl_is_supported() && !purple_strequal(encryption_type, OSCAR_NO_ENCRYPTION);
 
 	/* Connect to core Purple signals */
 	purple_prefs_connect_callback(gc, "/purple/away/idle_reporting", idle_reporting_pref_cb, gc);
@@ -779,8 +783,36 @@ oscar_login(PurpleAccount *account)
 	 * This authentication method is used for both ICQ and AIM when
 	 * clientLogin is not enabled.
 	 */
-	if (purple_account_get_bool(account, "use_clientlogin", OSCAR_DEFAULT_USE_CLIENTLOGIN)) {
+	if (purple_strequal(login_type, OSCAR_CLIENT_LOGIN)) {
+		/* Note: Actual server/port configuration is ignored here */
 		send_client_login(od, purple_account_get_username(account));
+	} else if (purple_strequal(login_type, OSCAR_KERBEROS_LOGIN)) {
+		const char *server;
+
+		if (!od->use_ssl) {
+			purple_connection_error_reason(
+				gc,
+				PURPLE_CONNECTION_ERROR_NO_SSL_SUPPORT,
+				_("You required Kerberos authentication but encryption is disabled in your account settings."));
+			return;
+		}
+		server = purple_account_get_string(account, "server", AIM_DEFAULT_KDC_SERVER);
+		/*
+		 * If the account's server is what the oscar protocol has offered as
+		 * the default login server through the vast eons (all two of
+		 * said default options, AFAIK) and the user wants KDC, we'll
+		 * do what we know is best for them and change the setting out
+		 * from under them to the KDC login server.
+		 */
+		if (purple_strequal(server, get_login_server(od->icq, FALSE)) ||
+			purple_strequal(server, get_login_server(od->icq, TRUE)) ||
+			purple_strequal(server, AIM_ALT_LOGIN_SERVER) ||
+			purple_strequal(server, "")) {
+			purple_debug_info("oscar", "Account uses Kerberos auth, so changing server to default KDC server\n");
+			purple_account_set_string(account, "server", AIM_DEFAULT_KDC_SERVER);
+			purple_account_set_int(account, "port", AIM_DEFAULT_KDC_PORT);
+		}
+		send_kerberos_login(od, purple_account_get_username(account));
 	} else {
 		FlapConnection *newconn;
 		const char *server;
@@ -797,9 +829,13 @@ oscar_login(PurpleAccount *account)
 			 * do what we know is best for them and change the setting out
 			 * from under them to the SSL login server.
 			 */
-			if (!strcmp(server, get_login_server(od->icq, FALSE)) || !strcmp(server, AIM_ALT_LOGIN_SERVER)) {
+			if (purple_strequal(server, get_login_server(od->icq, FALSE)) ||
+				purple_strequal(server, AIM_ALT_LOGIN_SERVER) ||
+				purple_strequal(server, AIM_DEFAULT_KDC_SERVER) ||
+				purple_strequal(server, "")) {
 				purple_debug_info("oscar", "Account uses SSL, so changing server to default SSL server\n");
 				purple_account_set_string(account, "server", get_login_server(od->icq, TRUE));
+				purple_account_set_int(account, "port", OSCAR_DEFAULT_LOGIN_PORT),
 				server = get_login_server(od->icq, TRUE);
 			}
 
@@ -814,9 +850,12 @@ oscar_login(PurpleAccount *account)
 			 * SSL but their server is set to OSCAR_DEFAULT_SSL_LOGIN_SERVER,
 			 * set it back to the default.
 			 */
-			if (!strcmp(server, get_login_server(od->icq, TRUE))) {
+			if (purple_strequal(server, get_login_server(od->icq, TRUE)) ||
+				purple_strequal(server, AIM_DEFAULT_KDC_SERVER) ||
+				purple_strequal(server, "")) {
 				purple_debug_info("oscar", "Account does not use SSL, so changing server back to non-SSL\n");
 				purple_account_set_string(account, "server", get_login_server(od->icq, FALSE));
+				purple_account_set_int(account, "port", OSCAR_DEFAULT_LOGIN_PORT),
 				server = get_login_server(od->icq, FALSE);
 			}
 
@@ -1287,9 +1326,9 @@ purple_handle_redirect(OscarData *od, FlapConnection *conn, FlapFrame *fr, ...)
 
 	if (!redir->use_ssl) {
 		const gchar *encryption_type = purple_account_get_string(account, "encryption", OSCAR_DEFAULT_ENCRYPTION);
-		if (strcmp(encryption_type, OSCAR_OPPORTUNISTIC_ENCRYPTION) == 0) {
+		if (purple_strequal(encryption_type, OSCAR_OPPORTUNISTIC_ENCRYPTION)) {
 			purple_debug_warning("oscar", "We won't use SSL for FLAP type 0x%04hx.\n", redir->group);
-		} else if (strcmp(encryption_type, OSCAR_REQUIRE_ENCRYPTION) == 0) {
+		} else if (purple_strequal(encryption_type, OSCAR_REQUIRE_ENCRYPTION)) {
 			purple_debug_error("oscar", "FLAP server %s:%d of type 0x%04hx doesn't support encryption.", host, port, redir->group);
 			purple_connection_error_reason(
 				gc,
@@ -1460,7 +1499,7 @@ static int purple_parse_oncoming(OscarData *od, FlapConnection *conn, FlapFrame 
 			? oscar_encoding_to_utf8(info->status_encoding, info->status, info->status_len)
 			: NULL;
 
-	if (strcmp(status_id, OSCAR_STATUS_ID_AVAILABLE) == 0) {
+	if (purple_strequal(status_id, OSCAR_STATUS_ID_AVAILABLE)) {
 		/* TODO: If itmsurl is NULL, does that mean the URL has been
 		   cleared?  Or does it mean the URL should remain unchanged? */
 		if (info->itmsurl != NULL) {
@@ -1515,7 +1554,7 @@ static int purple_parse_oncoming(OscarData *od, FlapConnection *conn, FlapFrame 
 		if (b != NULL)
 			saved_b16 = purple_buddy_icons_get_checksum_for_user(b);
 
-		if (!b16 || !saved_b16 || strcmp(b16, saved_b16)) {
+		if (!b16 || !saved_b16 || !purple_strequal(b16, saved_b16)) {
 			/* Invalidate the old icon for this user */
 			purple_buddy_icons_set_for_user(account, info->bn, NULL, 0, NULL);
 
@@ -2090,7 +2129,7 @@ incomingim_chan4(OscarData *od, FlapConnection *conn, aim_userinfo_t *userinfo, 
 			smsmsg = byte_stream_getstr(&qbs, smslen);
 
 			/* Check if this is an SMS being sent from server */
-			if ((smstype == 0) && (!strcmp(tagstr, "ICQSMS")) && (smsmsg != NULL))
+			if ((smstype == 0) && (purple_strequal(tagstr, "ICQSMS")) && (smsmsg != NULL))
 			{
 				xmlroot = xmlnode_from_str(smsmsg, -1);
 				if (xmlroot != NULL)
@@ -2900,7 +2939,7 @@ static int purple_bosrights(OscarData *od, FlapConnection *conn, FlapFrame *fr, 
 		serv_set_info(gc, purple_account_get_user_info(account));
 
 	username = purple_account_get_username(account);
-	if (!od->icq && strcmp(username, purple_connection_get_display_name(gc)) != 0) {
+	if (!od->icq && !purple_strequal(username, purple_connection_get_display_name(gc))) {
 		/*
 		 * Format the username for AIM accounts if it's different
 		 * than what's currently set.
@@ -3472,31 +3511,31 @@ oscar_get_extended_status(PurpleConnection *gc)
 	if (purple_account_get_bool(account, "web_aware", OSCAR_DEFAULT_WEB_AWARE))
 		data |= AIM_ICQ_STATE_WEBAWARE;
 
-	if (!strcmp(status_id, OSCAR_STATUS_ID_AVAILABLE))
+	if (purple_strequal(status_id, OSCAR_STATUS_ID_AVAILABLE))
 		data |= AIM_ICQ_STATE_NORMAL;
-	else if (!strcmp(status_id, OSCAR_STATUS_ID_AWAY))
+	else if (purple_strequal(status_id, OSCAR_STATUS_ID_AWAY))
 		data |= AIM_ICQ_STATE_AWAY;
-	else if (!strcmp(status_id, OSCAR_STATUS_ID_DND))
+	else if (purple_strequal(status_id, OSCAR_STATUS_ID_DND))
 		data |= AIM_ICQ_STATE_AWAY | AIM_ICQ_STATE_DND | AIM_ICQ_STATE_BUSY;
-	else if (!strcmp(status_id, OSCAR_STATUS_ID_NA))
+	else if (purple_strequal(status_id, OSCAR_STATUS_ID_NA))
 		data |= AIM_ICQ_STATE_OUT | AIM_ICQ_STATE_AWAY;
-	else if (!strcmp(status_id, OSCAR_STATUS_ID_OCCUPIED))
+	else if (purple_strequal(status_id, OSCAR_STATUS_ID_OCCUPIED))
 		data |= AIM_ICQ_STATE_AWAY | AIM_ICQ_STATE_BUSY;
-	else if (!strcmp(status_id, OSCAR_STATUS_ID_FREE4CHAT))
+	else if (purple_strequal(status_id, OSCAR_STATUS_ID_FREE4CHAT))
 		data |= AIM_ICQ_STATE_CHAT;
-	else if (!strcmp(status_id, OSCAR_STATUS_ID_INVISIBLE))
+	else if (purple_strequal(status_id, OSCAR_STATUS_ID_INVISIBLE))
 		data |= AIM_ICQ_STATE_INVISIBLE;
-	else if (!strcmp(status_id, OSCAR_STATUS_ID_EVIL))
+	else if (purple_strequal(status_id, OSCAR_STATUS_ID_EVIL))
 		data |= AIM_ICQ_STATE_EVIL;
-	else if (!strcmp(status_id, OSCAR_STATUS_ID_DEPRESSION))
+	else if (purple_strequal(status_id, OSCAR_STATUS_ID_DEPRESSION))
 		data |= AIM_ICQ_STATE_DEPRESSION;
-	else if (!strcmp(status_id, OSCAR_STATUS_ID_ATWORK))
+	else if (purple_strequal(status_id, OSCAR_STATUS_ID_ATWORK))
 		data |= AIM_ICQ_STATE_ATWORK;
-	else if (!strcmp(status_id, OSCAR_STATUS_ID_ATHOME))
+	else if (purple_strequal(status_id, OSCAR_STATUS_ID_ATHOME))
 		data |= AIM_ICQ_STATE_ATHOME;
-	else if (!strcmp(status_id, OSCAR_STATUS_ID_LUNCH))
+	else if (purple_strequal(status_id, OSCAR_STATUS_ID_LUNCH))
 		data |= AIM_ICQ_STATE_LUNCH;
-	else if (!strcmp(status_id, OSCAR_STATUS_ID_CUSTOM))
+	else if (purple_strequal(status_id, OSCAR_STATUS_ID_CUSTOM))
 		data |= AIM_ICQ_STATE_OUT | AIM_ICQ_STATE_AWAY;
 
 	return data;
@@ -3743,7 +3782,7 @@ void oscar_remove_buddy(PurpleConnection *gc, PurpleBuddy *buddy, PurpleGroup *g
 void oscar_move_buddy(PurpleConnection *gc, const char *name, const char *old_group, const char *new_group) {
 	OscarData *od = purple_connection_get_protocol_data(gc);
 
-	if (od->ssi.received_data && strcmp(old_group, new_group)) {
+	if (od->ssi.received_data && !purple_strequal(old_group, new_group)) {
 		purple_debug_info("oscar",
 				   "ssi: moving buddy %s from group %s to group %s\n", name, old_group, new_group);
 		aim_ssi_movebuddy(od, old_group, new_group, name);
@@ -3979,7 +4018,7 @@ static int purple_ssi_parselist(OscarData *od, FlapConnection *conn, FlapFrame *
 		gboolean report_idle;
 
 		idle_reporting_pref = purple_prefs_get_string("/purple/away/idle_reporting");
-		report_idle = strcmp(idle_reporting_pref, "none") != 0;
+		report_idle = !purple_strequal(idle_reporting_pref, "none");
 
 		if (report_idle)
 			aim_ssi_setpresence(od, tmp | AIM_SSI_PRESENCE_FLAG_SHOWIDLE);
@@ -5647,7 +5686,7 @@ static PurpleAccount *find_acct(const char *prpl, const char *acct_id)
 	} else { /* Otherwise find an active account for the protocol */
 		GList *l = purple_accounts_get_all();
 		while (l) {
-			if (!strcmp(prpl, purple_account_get_protocol_id(l->data))
+			if (purple_strequal(prpl, purple_account_get_protocol_id(l->data))
 					&& purple_account_is_connected(l->data)) {
 				acct = l->data;
 				break;
@@ -5744,7 +5783,32 @@ void oscar_init(PurplePlugin *plugin, gboolean is_icq)
 		OSCAR_NO_ENCRYPTION,
 		NULL
 	};
+	static const gchar *aim_login_keys[] = {
+		N_("clientLogin"),
+		N_("Kerberos"),
+		N_("MD5-based"),
+		NULL
+	};
+	static const gchar *aim_login_values[] = {
+		OSCAR_CLIENT_LOGIN,
+		OSCAR_KERBEROS_LOGIN,
+		OSCAR_MD5_LOGIN,
+		NULL
+	};
+	static const gchar *icq_login_keys[] = {
+		N_("clientLogin"),
+		N_("MD5-based"),
+		NULL
+	};
+	static const gchar *icq_login_values[] = {
+		OSCAR_CLIENT_LOGIN,
+		OSCAR_MD5_LOGIN,
+		NULL
+	};
+	const gchar **login_keys;
+	const gchar **login_values;
 	GList *encryption_options = NULL;
+	GList *login_options = NULL;
 	int i;
 
 	option = purple_account_option_string_new(_("Server"), "server", get_login_server(is_icq, TRUE));
@@ -5762,8 +5826,20 @@ void oscar_init(PurplePlugin *plugin, gboolean is_icq)
 	option = purple_account_option_list_new(_("Connection security"), "encryption", encryption_options);
 	prpl_info->protocol_options = g_list_append(prpl_info->protocol_options, option);
 
-	option = purple_account_option_bool_new(_("Use clientLogin"), "use_clientlogin",
-			OSCAR_DEFAULT_USE_CLIENTLOGIN);
+	if (is_icq) {
+		login_keys = icq_login_keys;
+		login_values = icq_login_values;
+	} else {
+		login_keys = aim_login_keys;
+		login_values = aim_login_values;
+	}
+	for (i = 0; login_keys[i]; i++) {
+		PurpleKeyValuePair *kvp = g_new0(PurpleKeyValuePair, 1);
+		kvp->key = g_strdup(_(login_keys[i]));
+		kvp->value = g_strdup(login_values[i]);
+		login_options = g_list_append(login_options, kvp);
+	}
+	option = purple_account_option_list_new(_("Authentication method"), "login_type", login_options);
 	prpl_info->protocol_options = g_list_append(prpl_info->protocol_options, option);
 
 	option = purple_account_option_bool_new(
@@ -5771,7 +5847,7 @@ void oscar_init(PurplePlugin *plugin, gboolean is_icq)
 		OSCAR_DEFAULT_ALWAYS_USE_RV_PROXY);
 	prpl_info->protocol_options = g_list_append(prpl_info->protocol_options, option);
 
-	if (g_str_equal(purple_plugin_get_id(plugin), "prpl-aim")) {
+	if (purple_strequal(purple_plugin_get_id(plugin), "prpl-aim")) {
 		option = purple_account_option_bool_new(_("Allow multiple simultaneous logins"), "allow_multiple_logins",
 												OSCAR_DEFAULT_ALLOW_MULTIPLE_LOGINS);
 		prpl_info->protocol_options = g_list_append(prpl_info->protocol_options, option);

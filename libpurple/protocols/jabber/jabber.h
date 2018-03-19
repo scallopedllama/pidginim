@@ -49,8 +49,6 @@ typedef enum {
 	JABBER_CAP_ITEMS          = 1 << 14,
 	JABBER_CAP_ROSTER_VERSIONING = 1 << 15,
 
-	JABBER_CAP_FACEBOOK       = 1 << 16,
-
 	JABBER_CAP_RETRIEVED      = 1 << 31
 } JabberCapabilities;
 
@@ -83,7 +81,7 @@ typedef struct _JabberStream JabberStream;
 #define CAPS0115_NODE "http://pidgin.im/"
 
 #define JABBER_DEFAULT_REQUIRE_TLS    "require_starttls"
-#define JABBER_DEFAULT_FT_PROXIES     "proxy.eu.jabber.org"
+#define JABBER_DEFAULT_FT_PROXIES     ""
 
 /* Index into attention_types list */
 #define JABBER_BUZZ 0
@@ -284,9 +282,6 @@ struct _JabberStream
 	gchar *google_relay_host;
 	GList *google_relay_requests; /* the HTTP requests to get */
 												/* relay info */
-
-	/* facebook quirks */
-	gboolean facebook_roster_cleanup_performed;
 };
 
 typedef gboolean (JabberFeatureEnabled)(JabberStream *js, const gchar *namespace);

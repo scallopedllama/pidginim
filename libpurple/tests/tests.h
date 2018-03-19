@@ -14,7 +14,6 @@ Suite * jabber_digest_md5_suite(void);
 Suite * jabber_jutil_suite(void);
 Suite * jabber_scram_suite(void);
 Suite * oscar_util_suite(void);
-Suite * yahoo_util_suite(void);
 Suite * util_suite(void);
 Suite * xmlnode_suite(void);
 
@@ -25,7 +24,7 @@ Suite * xmlnode_suite(void);
 
 #define assert_string_equal(expected, actual) { \
 	const gchar *a = actual; \
-	fail_unless(strcmp(expected, a) == 0, "Expected '%s' but got '%s'", expected, a); \
+	fail_unless(purple_strequal(expected, a), "Expected '%s' but got '%s'", expected, a); \
 }
 
 #define assert_string_equal_free(expected, actual) { \

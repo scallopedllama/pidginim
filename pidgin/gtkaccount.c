@@ -277,7 +277,7 @@ username_focus_cb(GtkWidget *widget, GdkEventFocus *event, AccountPrefsDialog *d
 	table = dialog->prpl_info->get_account_text_table(NULL);
 	label = g_hash_table_lookup(table, "login_label");
 
-	if(!strcmp(gtk_entry_get_text(GTK_ENTRY(widget)), label)) {
+	if(purple_strequal(gtk_entry_get_text(GTK_ENTRY(widget)), label)) {
 		gtk_entry_set_text(GTK_ENTRY(widget), "");
 		gtk_widget_modify_text(widget, GTK_STATE_NORMAL,NULL);
 	}
@@ -574,12 +574,8 @@ add_login_options(AccountPrefsDialog *dialog, GtkWidget *parent)
 		menu = gtk_option_menu_get_menu(GTK_OPTION_MENU(dialog->protocol_menu));
 		item = gtk_menu_get_active(GTK_MENU(menu));
 		if (value == NULL && g_object_get_data(G_OBJECT(item), "fakegoogle") &&
-			!strcmp(purple_account_user_split_get_text(split), _("Domain")))
+			purple_strequal(purple_account_user_split_get_text(split), _("Domain")))
 			value = "gmail.com";
-
-		if (value == NULL && g_object_get_data(G_OBJECT(item), "fakefacebook") &&
-			!strcmp(purple_account_user_split_get_text(split), _("Domain")))
-			value = "chat.facebook.com";
 
 		if (value != NULL)
 			gtk_entry_set_text(GTK_ENTRY(entry), value);
@@ -776,7 +772,7 @@ add_protocol_options(AccountPrefsDialog *dialog)
 {
 	PurpleAccountOption *option;
 	PurpleAccount *account;
-	GtkWidget *vbox, *check, *entry, *combo, *menu, *item;
+	GtkWidget *vbox, *check, *entry, *combo;
 	GList *list, *node;
 	gint i, idx, int_value;
 	GtkListStore *model;
@@ -815,9 +811,6 @@ add_protocol_options(AccountPrefsDialog *dialog)
 			gtk_label_new_with_mnemonic(_("Ad_vanced")), 1);
 	gtk_widget_show(vbox);
 
-	menu = gtk_option_menu_get_menu(GTK_OPTION_MENU(dialog->protocol_menu));
-	item = gtk_menu_get_active(GTK_MENU(menu));
-
 	for (l = dialog->prpl_info->protocol_options; l != NULL; l = l->next)
 	{
 		option = (PurpleAccountOption *)l->data;
@@ -830,7 +823,7 @@ add_protocol_options(AccountPrefsDialog *dialog)
 		{
 			case PURPLE_PREF_BOOLEAN:
 				if (account == NULL ||
-					strcmp(purple_account_get_protocol_id(account),
+					!purple_strequal(purple_account_get_protocol_id(account),
 						   dialog->protocol_id))
 				{
 					bool_value = purple_account_option_get_default_bool(option);
@@ -855,7 +848,7 @@ add_protocol_options(AccountPrefsDialog *dialog)
 
 			case PURPLE_PREF_INT:
 				if (account == NULL ||
-					strcmp(purple_account_get_protocol_id(account),
+					!purple_strequal(purple_account_get_protocol_id(account),
 						   dialog->protocol_id))
 				{
 					int_value = purple_account_option_get_default_int(option);
@@ -880,7 +873,7 @@ add_protocol_options(AccountPrefsDialog *dialog)
 
 			case PURPLE_PREF_STRING:
 				if (account == NULL ||
-					strcmp(purple_account_get_protocol_id(account),
+					!purple_strequal(purple_account_get_protocol_id(account),
 						   dialog->protocol_id))
 				{
 					str_value = purple_account_option_get_default_string(option);
@@ -916,7 +909,7 @@ add_protocol_options(AccountPrefsDialog *dialog)
 				idx = 0;
 
 				if (account == NULL ||
-					strcmp(purple_account_get_protocol_id(account),
+					!purple_strequal(purple_account_get_protocol_id(account),
 						   dialog->protocol_id))
 				{
 					str_value = purple_account_option_get_default_list_value(option);
@@ -931,10 +924,6 @@ add_protocol_options(AccountPrefsDialog *dialog)
 				list = purple_account_option_get_list(option);
 				model = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_POINTER);
 				opt_entry->widget = combo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(model));
-
-				if (g_object_get_data(G_OBJECT(item), "fakefacebook") &&
-					!strcmp(opt_entry->setting, "connection_security"))
-					str_value = "opportunistic_tls";
 
 				/* Loop through list of PurpleKeyValuePair items */
 				for (node = list; node != NULL; node = node->next) {
@@ -2530,7 +2519,7 @@ get_user_info_cb(GtkWidget   *label,
                  gpointer     data)
 {
 	struct auth_request *ar = data;
-	if (!strcmp(uri, "viewinfo")) {
+	if (purple_strequal(uri, "viewinfo")) {
 		pidgin_retrieve_user_info(purple_account_get_connection(ar->account), ar->username);
 		return TRUE;
 	}

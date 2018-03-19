@@ -32,6 +32,8 @@
 
 /** @copydoc _PurpleAccountUiOps */
 typedef struct _PurpleAccountUiOps PurpleAccountUiOps;
+/** @copydoc _PurpleAccountPrefsUiOps */
+typedef struct _PurpleAccountPrefsUiOps PurpleAccountPrefsUiOps;
 /** @copydoc _PurpleAccount */
 typedef struct _PurpleAccount      PurpleAccount;
 
@@ -121,6 +123,47 @@ struct _PurpleAccountUiOps
 	void (*_purple_reserved4)(void);
 };
 
+/**  Account prefs UI operations, to allow the UI to catch account preference
+ *   changes. Unlike the #PurplePrefsUiOps API, these are always stored
+ *   internally in a hash table. If the UI wants to handle accounts settings,
+ *   it must set them to the account on load and handle changes with set_
+ *   methods. Implementing load/save/schedule_save disables the built-in
+ *   accounts.xml code.
+ *
+ *   @since 2.11.0
+ */
+struct _PurpleAccountPrefsUiOps
+{
+	/** Notifies the UI that an integer account setting was set. */
+	void (*set_int)(PurpleAccount *account, const char *name, int value);
+
+	/** Notifies the UI that a string account setting was set. */
+	void (*set_string)(PurpleAccount *account, const char *name, const char *value);
+
+	/** Notifies the UI that a boolean account setting was set. */
+	void (*set_bool)(PurpleAccount *account, const char *name, gboolean value);
+
+	/** If this is set, accounts.xml loading will be disabled and this
+	 *  function will be called instead.
+	 */
+	void (*load)(void);
+
+	/** If this is set, accounts.xml saving will be disabled and this
+	 *  function will be called instead.
+	 */
+	void (*save)(void);
+
+	/** If this is set, the UI will handle scheduling the timer to call the
+	 *  save function, overriding the default timeout of 5 seconds.
+	 */
+	void (*schedule_save)(void);
+
+	void (*_purple_reserved1)(void);
+	void (*_purple_reserved2)(void);
+	void (*_purple_reserved3)(void);
+	void (*_purple_reserved4)(void);
+};
+
 /** Structure representing an account.
  */
 struct _PurpleAccount
@@ -149,7 +192,7 @@ struct _PurpleAccount
 	/*
 	 * TODO: Supplementing the next two linked lists with hash tables
 	 * should help performance a lot when these lists are long.  This
-	 * matters quite a bit for protocols like MSN, where all your
+	 * matters quite a bit for protocols, where all your
 	 * buddies are added to your permit list.  Currently we have to
 	 * iterate through the entire list if we want to check if someone
 	 * is permitted or denied.  We should do this for 3.0.0.
@@ -1159,6 +1202,22 @@ void purple_accounts_set_ui_ops(PurpleAccountUiOps *ops);
  * @return The UI operations structure in use.
  */
 PurpleAccountUiOps *purple_accounts_get_ui_ops(void);
+
+/**
+ * Sets the UI operations structure to be used for account preferences.
+ *
+ * @param ops The UI operations structure.
+ * @since 2.11.0
+ */
+void purple_account_prefs_set_ui_ops(PurpleAccountPrefsUiOps *ops);
+
+/**
+ * Returns the UI operations structure used for account preferences.
+ *
+ * @return The UI operations structure in use.
+ * @since 2.11.0
+ */
+PurpleAccountPrefsUiOps *purple_account_prefs_get_ui_ops(void);
 
 /*@}*/
 

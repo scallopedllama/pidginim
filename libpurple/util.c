@@ -60,6 +60,7 @@ struct _PurpleUtilFetchUrlData
 	char *user_agent;
 	gboolean http11;
 	char *request;
+	gsize request_len;
 	gsize request_written;
 	gboolean include_headers;
 
@@ -218,10 +219,6 @@ purple_base16_encode_chunked(const guchar *data, gsize len)
 /**************************************************************************
  * Base64 Functions
  **************************************************************************/
-static const char alphabet[] =
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	"0123456789+/";
-
 static const char xdigits[] =
 	"0123456789abcdef";
 
@@ -953,8 +950,7 @@ const char *
 purple_markup_unescape_entity(const char *text, int *length)
 {
 	const char *pln;
-	int len, pound;
-	char temp[2];
+	int len;
 
 	if (!text || *text != '&')
 		return NULL;
@@ -977,18 +973,29 @@ purple_markup_unescape_entity(const char *text, int *length)
 		pln = "\302\256";      /* or use g_unichar_to_utf8(0xae); */
 	else if(IS_ENTITY("&apos;"))
 		pln = "\'";
-	else if(*(text+1) == '#' &&
-			(sscanf(text, "&#%u%1[;]", &pound, temp) == 2 ||
-			 sscanf(text, "&#x%x%1[;]", &pound, temp) == 2) &&
-			pound != 0) {
+	else if(text[1] == '#' && (g_ascii_isxdigit(text[2]) || text[2] == 'x')) {
 		static char buf[7];
-		int buflen = g_unichar_to_utf8((gunichar)pound, buf);
+		const char *start = text + 2;
+		char *end;
+		guint64 pound;
+		int base = 10;
+		int buflen;
+
+		if (*start == 'x') {
+			base = 16;
+			start++;
+		}
+
+		pound = g_ascii_strtoull(start, &end, base);
+		if (pound == 0 || pound > INT_MAX || *end != ';') {
+			return NULL;
+		}
+
+		len = (end - text) + 1;
+
+		buflen = g_unichar_to_utf8((gunichar)pound, buf);
 		buf[buflen] = '\0';
 		pln = buf;
-
-		len = (*(text+2) == 'x' ? 3 : 2);
-		while(isxdigit((gint) text[len])) len++;
-		if(text[len] == ';') len++;
 	}
 	else
 		return NULL;
@@ -1881,7 +1888,6 @@ purple_markup_html_to_xhtml(const char *html, char **xhtml_out,
  * - \n should be converted to a normal space
  * - in addition to <br>, <p> and <div> etc. should also be converted into \n
  * - We want to turn </td>#whitespace<td> sequences into a single tab
- * - We want to turn <td> into a single tab (for msn profile "parsing")
  * - We want to turn </tr>#whitespace<tr> sequences into a single \n
  * - <script>...</script> and <style>...</style> should be completely removed
  */
@@ -3022,12 +3028,7 @@ purple_socket_speaks_ipv4(int fd)
 gboolean
 purple_strequal(const gchar *left, const gchar *right)
 {
-#if GLIB_CHECK_VERSION(2,16,0)
 	return (g_strcmp0(left, right) == 0);
-#else
-	return ((left == NULL && right == NULL) ||
-	        (left != NULL && right != NULL && strcmp(left, right) == 0));
-#endif
 }
 
 const char *
@@ -3427,7 +3428,7 @@ void purple_got_protocol_handler_uri(const char *uri)
 
 	tmp++;
 
-	if (g_str_equal(proto, "xmpp"))
+	if (purple_strequal(proto, "xmpp"))
 		delimiter = ';';
 	else
 		delimiter = '&';
@@ -3744,7 +3745,7 @@ find_header_content(const char *data, gsize data_len, const char *header)
 	return NULL;
 }
 
-static gsize 
+static gsize
 parse_content_len(const char *data, gsize data_len)
 {
 	gsize content_len = 0;
@@ -4082,14 +4083,15 @@ url_fetch_send_cb(gpointer data, gint source, PurpleInputCondition cond)
 		g_string_append(request_str, "\r\n");
 
 		gfud->request = g_string_free(request_str, FALSE);
+		gfud->request_len = strlen(gfud->request);
 	}
 
 	if(purple_debug_is_unsafe())
-		purple_debug_misc("util", "Request: '%s'\n", gfud->request);
+		purple_debug_misc("util", "Request: '%.*s'\n", (int) gfud->request_len, gfud->request);
 	else
 		purple_debug_misc("util", "request constructed\n");
 
-	total_len = strlen(gfud->request);
+	total_len = gfud->request_len;
 
 	if (gfud->is_ssl)
 		len = purple_ssl_write(gfud->ssl_connection, gfud->request + gfud->request_written,
@@ -4196,6 +4198,17 @@ purple_util_fetch_url_request_len_with_account(PurpleAccount *account,
 		const char *request, gboolean include_headers, gssize max_len,
 		PurpleUtilFetchUrlCallback callback, void *user_data)
 {
+	return purple_util_fetch_url_request_data_len_with_account(account, url, full,
+		user_agent, http11, request, request ? strlen (request) : 0, include_headers, max_len, callback,
+			user_data);
+}
+
+PurpleUtilFetchUrlData *
+purple_util_fetch_url_request_data_len_with_account(PurpleAccount *account,
+		const char *url, gboolean full,	const char *user_agent, gboolean http11,
+		const char *request, gsize request_len, gboolean include_headers, gssize max_len,
+		PurpleUtilFetchUrlCallback callback, void *user_data)
+{
 	PurpleUtilFetchUrlData *gfud;
 
 	g_return_val_if_fail(url      != NULL, NULL);
@@ -4216,7 +4229,8 @@ purple_util_fetch_url_request_len_with_account(PurpleAccount *account,
 	gfud->user_agent = g_strdup(user_agent);
 	gfud->http11 = http11;
 	gfud->full = full;
-	gfud->request = g_strdup(request);
+	gfud->request = request_len ? g_memdup(request, request_len) : NULL;
+	gfud->request_len = request_len;
 	gfud->include_headers = include_headers;
 	gfud->fd = -1;
 	if (max_len <= 0) {
@@ -4389,7 +4403,7 @@ purple_email_is_valid(const char *address)
 		if (*c == '\"' && (c == address || *(c - 1) == '.' || *(c - 1) == '\"')) {
 			while (*++c) {
 				if (*c == '\\') {
-					if (*c++ && *c < 127 && *c != '\n' && *c != '\r') continue;
+					if (*c++ && *c < 127 && *c > 0 && *c != '\n' && *c != '\r') continue;
 					else return FALSE;
 				}
 				if (*c == '\"') break;
@@ -4567,6 +4581,17 @@ purple_uri_list_extract_filenames(const gchar *uri_list)
 		g_free (s);
 	}
 	return result;
+}
+
+char *
+purple_uri_escape_for_open(const char *unescaped)
+{
+	/* Replace some special characters like $ with their percent-encoded value.
+	 * This shouldn't be necessary because we shell-escape the entire arg before
+	 * exec'ing the browser, however, we had a report that a URL containing
+	 * $(xterm) was causing xterm to start on his system. This is obviously a
+	 * bug on his system, but it's pretty easy for us to protect against it. */
+	return g_uri_escape_string(unescaped, "[]:;/%#,+?=&@", FALSE);
 }
 
 /**************************************************************************

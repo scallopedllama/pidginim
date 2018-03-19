@@ -69,20 +69,6 @@ ssl_gnutls_init_gnutls(void)
 	const char *debug_level;
 	const char *host_priorities_str;
 
-	/* Configure GnuTLS to use glib memory management */
-	/* I expect that this isn't really necessary, but it may prevent
-	   some bugs */
-	/* TODO: It may be necessary to wrap this allocators for GnuTLS.
-	   If there are strange bugs, perhaps look here (yes, I am a
-	   hypocrite) */
-	gnutls_global_set_mem_functions(
-		(gnutls_alloc_function)   g_malloc, /* malloc */
-		(gnutls_alloc_function)   g_malloc, /* secure malloc */
-		NULL,      /* mem_is_secure */
-		(gnutls_realloc_function) g_realloc, /* realloc */
-		(gnutls_free_function)    g_free     /* free */
-		);
-
 	debug_level = g_getenv("PURPLE_GNUTLS_DEBUG");
 	if (debug_level) {
 		int level = atoi(debug_level);
@@ -131,7 +117,7 @@ ssl_gnutls_init_gnutls(void)
 					                               "string for %s\n", host);
 				} else {
 					/* TODO: Validate each of these and complain */
-					if (g_str_equal(host, "*")) {
+					if (purple_strequal(host, "*")) {
 						/* Override the default priority */
 						g_free(default_priority_str);
 						default_priority_str = g_strdup(prio_str);
@@ -608,7 +594,7 @@ ssl_gnutls_get_peer_certificates(PurpleSslConnection * gsc)
 		   TODO: Is anyone complaining? (Maybe elb?) */
 		/* only append if previous cert was actually signed by this one.
 		 * Thanks Microsoft. */
-		if ((prvcrt == NULL) || x509_certificate_signed_by(prvcrt, newcrt)) {
+		if ((newcrt != NULL) && ((prvcrt == NULL) || x509_certificate_signed_by(prvcrt, newcrt))) {
 			peer_certs = g_list_append(peer_certs, newcrt);
 			prvcrt = newcrt;
 		} else {
@@ -685,12 +671,18 @@ x509_import_from_datum(const gnutls_datum_t dt, gnutls_x509_crt_fmt_t mode)
 
 	/* Allocate and prepare the internal certificate data */
 	certdat = g_new0(x509_crtdata_t, 1);
-	gnutls_x509_crt_init(&(certdat->crt));
+	if (gnutls_x509_crt_init(&(certdat->crt)) != 0) {
+		g_free(certdat);
+		return NULL;
+	}
 	certdat->refcount = 0;
 
 	/* Perform the actual certificate parse */
 	/* Yes, certdat->crt should be passed as-is */
-	gnutls_x509_crt_import(certdat->crt, &dt, mode);
+	if (gnutls_x509_crt_import(certdat->crt, &dt, mode) != 0) {
+		g_free(certdat);
+		return NULL;
+	}
 
 	/* Allocate the certificate and load it with data */
 	crt = g_new0(PurpleCertificate, 1);
@@ -780,7 +772,9 @@ x509_importcerts_from_file(const gchar * filename)
 
 		/* Perform the conversion; files should be in PEM format */
 		crt = x509_import_from_datum(dt, GNUTLS_X509_FMT_PEM);
-		crts = g_slist_prepend(crts, crt);
+		if (crt != NULL) {
+			crts = g_slist_prepend(crts, crt);
+		}
 		begin = end;
 	}
 
@@ -1043,9 +1037,9 @@ x509_certificate_signed_by(PurpleCertificate * crt,
 }
 
 static GByteArray *
-x509_sha1sum(PurpleCertificate *crt)
+x509_shasum(PurpleCertificate *crt, gnutls_digest_algorithm_t algo)
 {
-	size_t hashlen = 20; /* SHA1 hashes are 20 bytes */
+	size_t hashlen = (algo == GNUTLS_DIG_SHA1) ? 20 : 32;
 	size_t tmpsz = hashlen; /* Throw-away variable for GnuTLS to stomp on*/
 	gnutls_x509_crt_t crt_dat;
 	GByteArray *hash; /**< Final hash container */
@@ -1057,7 +1051,7 @@ x509_sha1sum(PurpleCertificate *crt)
 
 	/* Extract the fingerprint */
 	g_return_val_if_fail(
-		0 == gnutls_x509_crt_get_fingerprint(crt_dat, GNUTLS_DIG_SHA,
+		0 == gnutls_x509_crt_get_fingerprint(crt_dat, algo,
 						     hashbuf, &tmpsz),
 		NULL);
 
@@ -1069,6 +1063,18 @@ x509_sha1sum(PurpleCertificate *crt)
 	g_byte_array_append(hash, hashbuf, hashlen);
 
 	return hash;
+}
+
+static GByteArray *
+x509_sha1sum(PurpleCertificate *crt)
+{
+	return x509_shasum(crt, GNUTLS_DIG_SHA1);
+}
+
+static GByteArray *
+x509_sha256sum(PurpleCertificate *crt)
+{
+	return x509_shasum(crt, GNUTLS_DIG_SHA256);
 }
 
 static gchar *
@@ -1226,6 +1232,46 @@ x509_times (PurpleCertificate *crt, time_t *activation, time_t *expiration)
 	return success;
 }
 
+/* GNUTLS_KEYID_USE_BEST_KNOWN was added in gnutls 3.4.1, but can't ifdef it
+ * because it's an enum member. Older versions will ignore it, which means
+ * using SHA1 instead of SHA256 to compare pubkeys. But hey, not my fault. */
+#if GNUTLS_VERSION_NUMBER < 0x030401
+#define KEYID_FLAG (1<<30)
+#else
+#define KEYID_FLAG GNUTLS_KEYID_USE_BEST_KNOWN
+#endif
+
+static gboolean
+x509_compare_pubkeys (PurpleCertificate *crt1, PurpleCertificate *crt2)
+{
+	gnutls_x509_crt_t crt_dat1, crt_dat2;
+	unsigned char buffer1[64], buffer2[64];
+	size_t size1, size2;
+	size1 = size2 = sizeof(buffer1);
+
+	g_return_val_if_fail(crt1 && crt2, FALSE);
+	g_return_val_if_fail(crt1->scheme == &x509_gnutls, FALSE);
+	g_return_val_if_fail(crt2->scheme == &x509_gnutls, FALSE);
+
+	crt_dat1 = X509_GET_GNUTLS_DATA(crt1);
+
+	if (gnutls_x509_crt_get_key_id(crt_dat1, KEYID_FLAG, buffer1, &size1) != 0) {
+		return FALSE;
+	}
+
+	crt_dat2 = X509_GET_GNUTLS_DATA(crt2);
+
+	if (gnutls_x509_crt_get_key_id(crt_dat2, KEYID_FLAG, buffer2, &size2) != 0) {
+		return FALSE;
+	}
+
+	if (size1 != size2) {
+		return FALSE;
+	}
+
+	return memcmp(buffer1, buffer2, size1) == 0;
+}
+
 /* X.509 certificate operations provided by this plugin */
 static PurpleCertificateScheme x509_gnutls = {
 	"x509",                          /* Scheme name */
@@ -1245,8 +1291,9 @@ static PurpleCertificateScheme x509_gnutls = {
 
 	NULL,
 	NULL,
-	NULL
-
+	sizeof(PurpleCertificateScheme), /* struct_size */
+	x509_sha256sum,                  /* SHA256 fingerprint */
+	x509_compare_pubkeys,            /* Compare public keys */
 };
 
 static PurpleSslOps ssl_ops =

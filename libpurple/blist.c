@@ -101,7 +101,7 @@ static guint _purple_blist_hbuddy_equal(struct _purple_hbuddy *hb1, struct _purp
 {
 	return (hb1->group == hb2->group &&
 	        hb1->account == hb2->account &&
-	        g_str_equal(hb1->name, hb2->name));
+	        purple_strequal(hb1->name, hb2->name));
 }
 
 static void _purple_blist_hbuddy_free_key(struct _purple_hbuddy *hb)
@@ -279,7 +279,7 @@ group_to_xmlnode(PurpleBlistNode *gnode)
 	group = (PurpleGroup *)gnode;
 
 	node = xmlnode_new("group");
-	if (g_strcmp0(group->name, _("Buddies")) != 0)
+	if (!purple_strequal(group->name, _("Buddies")))
 		xmlnode_set_attrib(node, "name", group->name);
 
 	/* Write settings */
@@ -1624,8 +1624,10 @@ void purple_blist_add_buddy(PurpleBuddy *buddy, PurpleContact *contact, PurpleGr
 		((PurpleContact*)bnode->parent)->totalsize--;
 		/* the group totalsize will be taken care of by remove_contact below */
 
-		if (bnode->parent->parent != (PurpleBlistNode*)g)
+		if (bnode->parent->parent != (PurpleBlistNode*)g) {
+			purple_signal_emit(purple_blist_get_handle(), "buddy-removed-from-group", buddy);
 			serv_move_buddy(buddy, (PurpleGroup *)bnode->parent->parent, g);
+		}
 
 		if (bnode->next)
 			bnode->next->prev = bnode->prev;
@@ -2569,7 +2571,7 @@ purple_blist_find_chat(PurpleAccount *account, const char *name)
 				g_list_free(parts);
 
 				if (chat->account == account && chat_name != NULL &&
-					normname != NULL && !strcmp(purple_normalize(account, chat_name), normname)) {
+					purple_strequal(purple_normalize(account, chat_name), normname)) {
 					g_free(normname);
 					return chat;
 				}
@@ -3189,6 +3191,11 @@ purple_blist_init(void)
 										PURPLE_SUBTYPE_BLIST_BUDDY));
 
 	purple_signal_register(handle, "buddy-removed",
+						 purple_marshal_VOID__POINTER, NULL, 1,
+						 purple_value_new(PURPLE_TYPE_SUBTYPE,
+										PURPLE_SUBTYPE_BLIST_BUDDY));
+
+	purple_signal_register(handle, "buddy-removed-from-group",
 						 purple_marshal_VOID__POINTER, NULL, 1,
 						 purple_value_new(PURPLE_TYPE_SUBTYPE,
 										PURPLE_SUBTYPE_BLIST_BUDDY));

@@ -156,7 +156,7 @@ status_window_find_savedstatus(GtkTreeIter *iter, const char *title)
 
 	do {
 		gtk_tree_model_get(model, iter, STATUS_WINDOW_COLUMN_TITLE, &cur, -1);
-		if (!strcmp(title, cur))
+		if (purple_strequal(title, cur))
 		{
 			g_free(cur);
 			return TRUE;
@@ -723,7 +723,7 @@ status_editor_ok_cb(GtkButton *button, gpointer user_data)
 	 */
 	if (((button == dialog->saveanduse_button) || (button == dialog->save_button)) &&
 		(purple_savedstatus_find(title) != NULL) &&
-		((dialog->original_title == NULL) || (strcmp(title, dialog->original_title))))
+		((dialog->original_title == NULL) || (!purple_strequal(title, dialog->original_title))))
 	{
 		purple_notify_error(status_window, NULL, _("Title already in use.  You must "
 						  "choose a unique title."), NULL);
@@ -761,7 +761,7 @@ status_editor_ok_cb(GtkButton *button, gpointer user_data)
 	else
 	{
 		/* Modify the old status */
-		if (strcmp(title, dialog->original_title))
+		if (!purple_strequal(title, dialog->original_title))
 			purple_savedstatus_set_title(saved_status, title);
 		purple_savedstatus_set_type(saved_status, type);
 	}
@@ -805,7 +805,7 @@ status_editor_ok_cb(GtkButton *button, gpointer user_data)
 	g_free(message);
 	g_free(unformatted);
 
-	/* If they clicked on "Save & Use" or "Use," then activate the status */
+	/* If they clicked on "Save and Use" or "Use," then activate the status */
 	if (button != dialog->save_button)
 		purple_savedstatus_activate(saved_status);
 
@@ -1185,7 +1185,7 @@ pidgin_status_editor_show(gboolean edit, PurpleSavedStatus *saved_status)
 	dialog->treeview = gtk_tree_view_new_with_model(GTK_TREE_MODEL(dialog->model));
 	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(dialog->treeview), TRUE);
 	gtk_widget_set_size_request(dialog->treeview, -1, 150);
-	gtk_box_pack_start(GTK_BOX(dbox), 
+	gtk_box_pack_start(GTK_BOX(dbox),
 		pidgin_make_scrollable(dialog->treeview, GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS, GTK_SHADOW_IN, -1, -1),
 		TRUE, TRUE, 0);
 
@@ -1215,8 +1215,8 @@ pidgin_status_editor_show(gboolean edit, PurpleSavedStatus *saved_status)
 	g_signal_connect(G_OBJECT(button), "clicked",
 					 G_CALLBACK(status_editor_ok_cb), dialog);
 
-	/* Save & Use button */
-	button = pidgin_pixbuf_button_from_stock(_("Sa_ve & Use"), GTK_STOCK_OK,
+	/* Save and Use button */
+	button = pidgin_pixbuf_button_from_stock(_("Sa_ve and Use"), GTK_STOCK_OK,
 										   PIDGIN_BUTTON_HORIZONTAL);
 	dialog->saveanduse_button = GTK_BUTTON(button);
 	gtk_box_pack_start(GTK_BOX(bbox), button, FALSE, FALSE, 0);
@@ -1531,7 +1531,7 @@ edit_substatus(StatusEditor *status_editor, PurpleAccount *account)
 						   STATUS_COLUMN_STATUS_ID, id,
 						   STATUS_COLUMN_STATUS_NAME, name,
 						   -1);
-		if ((status_id != NULL) && !strcmp(status_id, id))
+		if ((status_id != NULL) && purple_strequal(status_id, id))
 		{
 			gtk_combo_box_set_active_iter(GTK_COMBO_BOX(combo), &iter);
 			select = TRUE;
